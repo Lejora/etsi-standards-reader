@@ -187,10 +187,14 @@ export function useReaderWorkspace() {
     Boolean(contentsRange) &&
     pageNumber >= (contentsRange?.start ?? 0) &&
     pageNumber <= (contentsRange?.end ?? -1);
+  const firstOutlinePage = outline.length ? Math.min(...outline.map((item) => item.page)) : null;
+  const frontMatterBoundary =
+    contentsRange?.start ?? (firstOutlinePage && firstOutlinePage > 1 ? firstOutlinePage : null);
+  const isFrontMatterPage = Boolean(frontMatterBoundary && pageNumber < frontMatterBoundary);
 
   useEffect(() => {
     if (!pdf) return;
-    if (isContentsPage) {
+    if (isContentsPage || isFrontMatterPage) {
       setReadingBlocks([]);
       return;
     }
@@ -207,7 +211,7 @@ export function useReaderWorkspace() {
     return () => {
       ignored = true;
     };
-  }, [isContentsPage, outline, pageNumber, pdf]);
+  }, [isContentsPage, isFrontMatterPage, outline, pageNumber, pdf]);
 
   useEffect(() => {
     if (viewMode !== "reading") return;
@@ -326,7 +330,13 @@ export function useReaderWorkspace() {
 
   const pageOutline = outline.filter((item) => item.page === pageNumber);
   const sectionTitle =
-    (isContentsPage ? "Contents" : pageOutline[0]?.title) ??
+    (isFrontMatterPage
+      ? pageNumber === 1
+        ? "Cover page"
+        : "Front matter"
+      : isContentsPage
+        ? "Contents"
+        : pageOutline[0]?.title) ??
     [...outline].reverse().find((item) => item.page <= pageNumber)?.title ??
     "Document page";
   const nextReadingPage = isContentsPage && contentsRange ? contentsRange.end + 1 : pageNumber + 1;
@@ -434,6 +444,7 @@ export function useReaderWorkspace() {
     hits,
     indexStatus,
     isContentsPage,
+    isFrontMatterPage,
     librarySearchQuery,
     nextReadingPage,
     normativeHighlight,

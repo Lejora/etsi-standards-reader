@@ -119,6 +119,7 @@ function App() {
                 boundaryProgress={workspace.boundaryProgress}
                 canvasRef={workspace.canvasRef}
                 isContentsPage={workspace.isContentsPage}
+                isFrontMatterPage={workspace.isFrontMatterPage}
                 nextReadingPage={workspace.nextReadingPage}
                 normativeHighlight={workspace.normativeHighlight}
                 onImport={() => void workspace.importDocuments(selectedFolder?.id ?? selectedFolderId)}

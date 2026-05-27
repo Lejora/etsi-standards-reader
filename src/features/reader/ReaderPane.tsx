@@ -12,8 +12,8 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import type { CSSProperties, RefObject, UIEventHandler, WheelEventHandler } from "react";
-import type { PDFDocumentProxy } from "pdfjs-dist";
+import { useEffect, useRef, type CSSProperties, type RefObject, type UIEventHandler, type WheelEventHandler } from "react";
+import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
 import { IconButton } from "../../components/ui/IconButton";
 import { HighlightedText } from "./HighlightedText";
 import type { OutlineItem, PageDirection, ReadingBlock, Theme, ViewMode } from "./types";
@@ -26,6 +26,7 @@ interface ReaderPaneProps {
   theme: Theme;
   sectionTitle: string;
   isContentsPage: boolean;
+  isFrontMatterPage: boolean;
   outline: OutlineItem[];
   readingBlocks: ReadingBlock[];
   nextReadingPage: number;
@@ -55,6 +56,7 @@ export function ReaderPane({
   theme,
   sectionTitle,
   isContentsPage,
+  isFrontMatterPage,
   outline,
   readingBlocks,
   nextReadingPage,
@@ -149,6 +151,7 @@ export function ReaderPane({
             boundaryDirection={boundaryDirection}
             boundaryProgress={boundaryProgress}
             isContentsPage={isContentsPage}
+            isFrontMatterPage={isFrontMatterPage}
             nextReadingPage={nextReadingPage}
             normativeHighlight={normativeHighlight}
             onPageChange={onPageChange}
@@ -201,6 +204,7 @@ interface ReadingDocumentProps {
   theme: Theme;
   sectionTitle: string;
   isContentsPage: boolean;
+  isFrontMatterPage: boolean;
   outline: OutlineItem[];
   readingBlocks: ReadingBlock[];
   normativeHighlight: boolean;
@@ -220,6 +224,7 @@ function ReadingDocument({
   theme,
   sectionTitle,
   isContentsPage,
+  isFrontMatterPage,
   outline,
   readingBlocks,
   normativeHighlight,
@@ -255,13 +260,17 @@ function ReadingDocument({
           </select>
         </div>
         <h1 className="reader-heading mb-8 text-[32px] font-semibold leading-tight tracking-tight">{sectionTitle}</h1>
-        <div className="mb-8 flex items-center justify-between rounded-lg border border-brand-100 bg-brand-50 px-4 py-3 text-xs text-slate-600">
-          <span>Figures, tables, and formulas can be checked against the original PDF.</span>
-          <button className="font-semibold text-brand-700" onClick={() => onViewModeChange("original")}>
-            Open original
-          </button>
-        </div>
-        {isContentsPage ? (
+        {isFrontMatterPage ? (
+          <FrontMatterPreview pdf={pdf} pageNumber={pageNumber} onViewModeChange={onViewModeChange} />
+        ) : (
+          <div className="mb-8 flex items-center justify-between rounded-lg border border-brand-100 bg-brand-50 px-4 py-3 text-xs text-slate-600">
+            <span>Figures, tables, and formulas can be checked against the original PDF.</span>
+            <button className="font-semibold text-brand-700" onClick={() => onViewModeChange("original")}>
+              Open original
+            </button>
+          </div>
+        )}
+        {isFrontMatterPage ? null : isContentsPage ? (
           <StructuredContents outline={outline} onPageChange={onPageChange} />
         ) : (
           <ReadingBody blocks={readingBlocks} normativeHighlight={normativeHighlight} pageNumber={pageNumber} />
@@ -282,6 +291,58 @@ function ReadingDocument({
         </div>
       )}
     </>
+  );
+}
+
+function FrontMatterPreview({
+  pdf,
+  pageNumber,
+  onViewModeChange,
+}: {
+  pdf: PDFDocumentProxy;
+  pageNumber: number;
+  onViewModeChange(mode: ViewMode): void;
+}) {
+  const previewRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    let ignored = false;
+    let renderTask: ReturnType<PDFPageProxy["render"]> | undefined;
+    void pdf.getPage(pageNumber).then((page) => {
+      if (ignored) return;
+      const canvas = previewRef.current;
+      const context = canvas?.getContext("2d");
+      if (!canvas || !context) return;
+      const originalViewport = page.getViewport({ scale: 1 });
+      const viewport = page.getViewport({ scale: Math.min(1, 600 / originalViewport.width) });
+      canvas.width = Math.ceil(viewport.width);
+      canvas.height = Math.ceil(viewport.height);
+      renderTask = page.render({ canvas, canvasContext: context, viewport });
+      return renderTask.promise;
+    });
+    return () => {
+      ignored = true;
+      renderTask?.cancel();
+    };
+  }, [pageNumber, pdf]);
+
+  return (
+    <section className="front-matter">
+      <div className="front-matter-notice">
+        <div>
+          <p className="front-matter-label">Original layout preserved</p>
+          <p className="front-matter-description">
+            Cover and preliminary pages are displayed as composed in the source document.
+          </p>
+        </div>
+        <button className="front-matter-action" onClick={() => onViewModeChange("original")}>
+          Open original
+        </button>
+      </div>
+      <div className="front-matter-preview">
+        <canvas className="front-matter-canvas" ref={previewRef} />
+      </div>
+    </section>
   );
 }
 
