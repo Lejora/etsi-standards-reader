@@ -123,6 +123,7 @@ function App() {
                 normativeHighlight={workspace.normativeHighlight}
                 onImport={() => void workspace.importDocuments(selectedFolder?.id ?? selectedFolderId)}
                 onDownload={() => void workspace.downloadDocument()}
+                onCopyCitation={() => void workspace.copyCitation()}
                 onNormativeHighlightChange={workspace.setNormativeHighlight}
                 onPageChange={workspace.setPageNumber}
                 onScroll={workspace.handleReaderScroll}

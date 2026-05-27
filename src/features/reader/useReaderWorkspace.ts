@@ -331,6 +331,18 @@ export function useReaderWorkspace() {
     "Document page";
   const nextReadingPage = isContentsPage && contentsRange ? contentsRange.end + 1 : pageNumber + 1;
 
+  async function copyCitation() {
+    if (!activeDocument || !window.etsiClipboard) return;
+
+    const citation = `${activeDocument.fileName} | Page ${pageNumber} | ${sectionTitle}`;
+    try {
+      await window.etsiClipboard.writeText(citation);
+      pushToast("Citation copied to clipboard.");
+    } catch {
+      pushToast("Unable to copy the citation.", "error");
+    }
+  }
+
   function resetBoundaryProgress() {
     boundaryDeltaRef.current = 0;
     setBoundaryProgress(0);
@@ -443,6 +455,7 @@ export function useReaderWorkspace() {
     toasts,
     dismissToast,
     downloadDocument,
+    copyCitation,
     handleReaderScroll,
     handleReadingWheel,
     createFolder,

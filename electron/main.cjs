@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, Menu, shell } = require("electron");
+const { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, shell } = require("electron");
 const crypto = require("node:crypto");
 const fs = require("node:fs");
 const fsp = require("node:fs/promises");
@@ -298,6 +298,9 @@ ipcMain.handle("library:read-pdf", async (_event, documentId) => {
 });
 
 ipcMain.handle("library:download-pdf", async (_event, documentId) => copyDocumentToDownloads(documentId));
+ipcMain.handle("clipboard:write-text", async (_event, text) => {
+  clipboard.writeText(String(text ?? ""));
+});
 
 ipcMain.handle("library:location", async () => {
   const { root } = await ensureLibrary();

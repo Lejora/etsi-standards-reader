@@ -3,11 +3,11 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Copy,
   Download,
   Highlighter,
   MoreVertical,
   PanelLeftClose,
-  Share2,
   Upload,
   ZoomIn,
   ZoomOut,
@@ -37,6 +37,7 @@ interface ReaderPaneProps {
   readingScrollRef: RefObject<HTMLDivElement | null>;
   onImport(): void;
   onDownload(): void;
+  onCopyCitation(): void;
   onViewModeChange(mode: ViewMode): void;
   onPageChange(page: number): void;
   onZoomChange(zoom: number): void;
@@ -65,6 +66,7 @@ export function ReaderPane({
   readingScrollRef,
   onImport,
   onDownload,
+  onCopyCitation,
   onViewModeChange,
   onPageChange,
   onZoomChange,
@@ -123,8 +125,8 @@ export function ReaderPane({
           >
             <Highlighter size={16} />
           </IconButton>
-          <IconButton label="Share">
-            <Share2 size={16} />
+          <IconButton label="Copy citation" disabled={!pdf} onClick={onCopyCitation}>
+            <Copy size={16} />
           </IconButton>
           <IconButton label="Download original PDF" disabled={!pdf} onClick={onDownload}>
             <Download size={16} />

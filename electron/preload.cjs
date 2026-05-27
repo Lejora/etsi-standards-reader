@@ -17,6 +17,10 @@ contextBridge.exposeInMainWorld("etsiLibrary", {
   getLocation: () => ipcRenderer.invoke("library:location"),
 });
 
+contextBridge.exposeInMainWorld("etsiClipboard", {
+  writeText: (text) => ipcRenderer.invoke("clipboard:write-text", text),
+});
+
 contextBridge.exposeInMainWorld("etsiWindow", {
   isMaximized: () => ipcRenderer.invoke("window:is-maximized"),
   minimize: () => ipcRenderer.send("window:minimize"),

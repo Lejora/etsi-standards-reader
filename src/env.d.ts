@@ -39,6 +39,9 @@ interface Window {
     downloadPdf(documentId: string): Promise<DownloadResult>;
     getLocation(): Promise<string>;
   };
+  etsiClipboard?: {
+    writeText(text: string): Promise<void>;
+  };
   etsiWindow?: {
     isMaximized(): Promise<boolean>;
     minimize(): void;
