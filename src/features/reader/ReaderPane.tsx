@@ -8,6 +8,7 @@ import {
   Highlighter,
   MoreVertical,
   PanelLeftClose,
+  PanelLeftOpen,
   Upload,
   ZoomIn,
   ZoomOut,
@@ -30,6 +31,7 @@ interface ReaderPaneProps {
   readingBlocks: ReadingBlock[];
   searchQuery: string;
   searchFilters: SearchFilters;
+  sidePanelOpen: boolean;
   nextReadingPage: number;
   normativeHighlight: boolean;
   pageTransition: PageDirection | null;
@@ -42,6 +44,7 @@ interface ReaderPaneProps {
   onCopyCitation(): void;
   onViewModeChange(mode: ViewMode): void;
   onPageChange(page: number): void;
+  onToggleDocumentPanel(): void;
   onZoomChange(zoom: number): void;
   onNormativeHighlightChange(enabled: boolean): void;
   onScroll: UIEventHandler<HTMLDivElement>;
@@ -60,6 +63,7 @@ export function ReaderPane({
   readingBlocks,
   searchQuery,
   searchFilters,
+  sidePanelOpen,
   nextReadingPage,
   normativeHighlight,
   pageTransition,
@@ -72,6 +76,7 @@ export function ReaderPane({
   onCopyCitation,
   onViewModeChange,
   onPageChange,
+  onToggleDocumentPanel,
   onZoomChange,
   onNormativeHighlightChange,
   onScroll,
@@ -81,8 +86,11 @@ export function ReaderPane({
     <main className="reader-pane flex min-h-0 min-w-0 flex-col overflow-hidden bg-[#f4f7f7]">
       <div className="flex h-[58px] shrink-0 items-center justify-between gap-3 overflow-x-auto border-b border-slate-200 bg-white px-5">
         <div className="flex shrink-0 items-center gap-3">
-          <IconButton label="Toggle document panel">
-            <PanelLeftClose size={17} />
+          <IconButton
+            label={sidePanelOpen ? "Hide document panel" : "Show document panel"}
+            onClick={onToggleDocumentPanel}
+          >
+            {sidePanelOpen ? <PanelLeftClose size={17} /> : <PanelLeftOpen size={17} />}
           </IconButton>
         </div>
         <div className="flex items-center gap-1">

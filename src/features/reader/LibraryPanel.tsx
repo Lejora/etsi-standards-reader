@@ -1,4 +1,4 @@
-import { BookOpenText, ChevronDown, FileText, FolderClosed, MoreVertical, Plus, Search, Upload } from "lucide-react";
+import { BookOpenText, ChevronDown, FileText, FolderClosed, MoreVertical, Plus, Upload } from "lucide-react";
 import { PanelHeader } from "./PanelHeader";
 import type { OutlineItem } from "./types";
 
@@ -12,8 +12,6 @@ interface LibraryPanelProps {
   activeDocument: ManagedDocument | null;
   outline: OutlineItem[];
   pageNumber: number;
-  searchQuery: string;
-  onSearchQueryChange(query: string): void;
   onImport(): void;
   onOpenDocument(document: ManagedDocument): void;
   onSelectPage(page: number): void;
@@ -25,8 +23,6 @@ export function LibraryPanel({
   activeDocument,
   outline,
   pageNumber,
-  searchQuery,
-  onSearchQueryChange,
   onImport,
   onOpenDocument,
   onSelectPage,
@@ -34,20 +30,7 @@ export function LibraryPanel({
   return (
     <aside className="workspace-panel flex min-h-0 flex-col overflow-hidden border-r border-slate-200 bg-white">
       <PanelHeader icon={<BookOpenText size={15} />} title="Reading" />
-
-      <div className="px-4 pt-3">
-        <label className="flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-slate-400 shadow-sm">
-          <Search size={15} />
-          <input
-            className="min-w-0 flex-1 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
-            placeholder="Search ETSI PDFs"
-            value={searchQuery}
-            onChange={(event) => onSearchQueryChange(event.target.value)}
-          />
-        </label>
-      </div>
-
-      <div className="flex items-center justify-between px-4 pb-3 pt-5 text-xs font-medium text-slate-500">
+      <div className="flex items-center justify-between px-4 pb-3 pt-4 text-xs font-medium text-slate-500">
         <span className="truncate" title={folderName}>
           {folderName}
         </span>

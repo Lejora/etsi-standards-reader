@@ -49,7 +49,6 @@ export function useReaderWorkspace() {
     pageTo: "",
   });
   const [readingBlocks, setReadingBlocks] = useState<ReadingBlock[]>([]);
-  const [librarySearchQuery, setLibrarySearchQuery] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [indexedPages, setIndexedPages] = useState<IndexedPage[]>([]);
   const [indexStatus, setIndexStatus] = useState("Not indexed");
@@ -427,10 +426,6 @@ export function useReaderWorkspace() {
     selectViewMode("reading");
   }
 
-  function updateLibrarySearch(query: string) {
-    setLibrarySearchQuery(query);
-  }
-
   return {
     activeDocument,
     boundaryDirection,
@@ -443,7 +438,6 @@ export function useReaderWorkspace() {
     indexStatus,
     isContentsPage,
     isFrontMatterPage,
-    librarySearchQuery,
     nextReadingPage,
     normativeHighlight,
     outline,
@@ -480,6 +474,5 @@ export function useReaderWorkspace() {
     setSidePanel,
     setNormativeHighlight,
     setZoom: updateViewZoom,
-    updateLibrarySearch,
   };
 }

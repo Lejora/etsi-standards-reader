@@ -17,6 +17,7 @@ function App() {
   const workspace = useReaderWorkspace();
   const [activeMode, setActiveMode] = useState<AppMode>("home");
   const [selectedFolderId, setSelectedFolderId] = useState("etsi-documents");
+  const [isSidePanelOpen, setIsSidePanelOpen] = useState(true);
   const [colorTheme, setColorTheme] = useState<ColorTheme>(() => {
     const savedTheme = window.localStorage.getItem(COLOR_THEME_STORAGE_KEY);
     return savedTheme === "ocean" || savedTheme === "mono" ? savedTheme : "forest";
@@ -82,10 +83,16 @@ function App() {
               }}
             />
           ) : (
-            <div className="grid min-h-0 flex-1 grid-cols-[248px_minmax(420px,1fr)] overflow-hidden xl:grid-cols-[278px_minmax(520px,1fr)]">
-              {activeMode === "settings" ? (
+            <div
+              className={`grid min-h-0 flex-1 overflow-hidden ${
+                isSidePanelOpen
+                  ? "grid-cols-[248px_minmax(420px,1fr)] xl:grid-cols-[278px_minmax(520px,1fr)]"
+                  : "grid-cols-1"
+              }`}
+            >
+              {isSidePanelOpen && activeMode === "settings" ? (
                 <SettingsPanel colorTheme={colorTheme} onColorThemeChange={setColorTheme} />
-              ) : activeMode === "search" ? (
+              ) : isSidePanelOpen && activeMode === "search" ? (
                 <SearchPanel
                   filters={workspace.searchFilters}
                   hasDocument={Boolean(workspace.pdf)}
@@ -97,7 +104,7 @@ function App() {
                   onSearchQueryChange={workspace.setSearchQuery}
                   searchQuery={workspace.searchQuery}
                 />
-              ) : (
+              ) : isSidePanelOpen ? (
                 <LibraryPanel
                   activeDocument={selectedFolderDocument}
                   documents={selectedFolderDocuments}
@@ -107,13 +114,11 @@ function App() {
                     setSelectedFolderId(document.folderId);
                     void workspace.openDocument(document);
                   }}
-                  onSearchQueryChange={workspace.updateLibrarySearch}
                   onSelectPage={workspace.setPageNumber}
                   outline={workspace.outline}
                   pageNumber={workspace.pageNumber}
-                  searchQuery={workspace.librarySearchQuery}
                 />
-              )}
+              ) : null}
               <ReaderPane
                 boundaryDirection={workspace.boundaryDirection}
                 boundaryProgress={workspace.boundaryProgress}
@@ -127,6 +132,7 @@ function App() {
                 onCopyCitation={() => void workspace.copyCitation()}
                 onNormativeHighlightChange={workspace.setNormativeHighlight}
                 onPageChange={workspace.setPageNumber}
+                onToggleDocumentPanel={() => setIsSidePanelOpen((current) => !current)}
                 onScroll={workspace.handleReaderScroll}
                 onViewModeChange={workspace.selectViewMode}
                 onWheel={workspace.handleReadingWheel}
@@ -140,6 +146,7 @@ function App() {
                 searchFilters={workspace.searchFilters}
                 searchQuery={activeMode === "search" ? workspace.searchQuery : ""}
                 sectionTitle={workspace.sectionTitle}
+                sidePanelOpen={isSidePanelOpen}
                 viewMode={workspace.viewMode}
                 zoom={workspace.zoom}
               />
