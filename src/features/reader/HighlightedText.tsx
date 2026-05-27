@@ -116,10 +116,11 @@ const commandPattern = commandTerms
   .map((term) => term.split(" ").map(escapePattern).join("[ _]+"))
   .join("|");
 
-const commandHighlightPattern = new RegExp(`\\b(${commandPattern})\\b`, "gi");
-const fullHighlightPattern = new RegExp(`\\b(shall not|shall|should|may|${commandPattern})\\b`, "gi");
+const normativeTokenPattern = "[Ss][Hh][Aa][Ll][Ll](?: [Nn][Oo][Tt])?|[Ss][Hh][Oo][Uu][Ll][Dd]|[Mm][Aa][Yy]";
+const commandHighlightPattern = new RegExp(`\\b(${commandPattern})\\b`, "g");
+const fullHighlightPattern = new RegExp(`\\b(${normativeTokenPattern}|${commandPattern})\\b`, "g");
 const normativePattern = /^(shall not|shall|should|may)$/i;
-const commandOnlyPattern = new RegExp(`^(?:${commandPattern})$`, "i");
+const commandOnlyPattern = new RegExp(`^(?:${commandPattern})$`);
 
 function createSearchPattern(searchQuery: string, searchFilters: SearchFilters) {
   const query = searchQuery.trim();
