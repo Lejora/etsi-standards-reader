@@ -1,0 +1,452 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Segoe UI Variable", "Segoe UI", "Yu Gothic UI", sans-serif;
+  --font-reader: "Segoe UI Variable Text", "Segoe UI", "Meiryo UI", "Yu Gothic UI", sans-serif;
+  --font-reader-heading: "Segoe UI Variable Display", "Segoe UI", "Meiryo UI", "Yu Gothic UI", sans-serif;
+  --color-brand-50: #edf8f5;
+  --color-brand-100: #d9f0ea;
+  --color-brand-500: #0f8b7d;
+  --color-brand-600: #087568;
+  --color-brand-700: #065e54;
+}
+
+.palette-forest {
+  --color-brand-50: #edf8f5;
+  --color-brand-100: #d9f0ea;
+  --color-brand-500: #0f8b7d;
+  --color-brand-600: #087568;
+  --color-brand-700: #065e54;
+  --color-shell: #132528;
+}
+
+.palette-ocean {
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-500: #3182d4;
+  --color-brand-600: #2563b8;
+  --color-brand-700: #1e4f95;
+  --color-shell: #10253b;
+}
+
+:root {
+  --color-shell: #132528;
+  font-family: var(--font-sans);
+  color: #18232a;
+  background: #f1f4f4;
+  font-synthesis: none;
+  text-rendering: geometricPrecision;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 980px;
+  overflow: hidden;
+}
+
+#root {
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: #c9d2d4;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-pane {
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.titlebar {
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+.titlebar-controls,
+.titlebar-controls button {
+  -webkit-app-region: no-drag;
+}
+
+.window-control {
+  display: grid;
+  height: 100%;
+  width: 48px;
+  place-items: center;
+  color: #bcc8c9;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
+}
+
+.window-control:hover {
+  background: rgb(255 255 255 / 9%);
+  color: #ffffff;
+}
+
+.window-control-close:hover {
+  background: #c42b3a;
+  color: #ffffff;
+}
+
+.toast-in {
+  animation: toast-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.toast-out {
+  animation: toast-out 240ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes toast-in {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-out {
+  to {
+    transform: translateX(14px);
+    opacity: 0;
+  }
+}
+
+.document-sheet {
+  transition:
+    opacity 170ms ease,
+    transform 170ms cubic-bezier(0.3, 0, 0.2, 1),
+    filter 170ms ease;
+}
+
+.reader-zoomable {
+  zoom: var(--reader-zoom, 1);
+}
+
+.page-transition-next {
+  transform: translateY(-18px) scale(0.992);
+  filter: blur(0.3px);
+  opacity: 0;
+}
+
+.page-transition-previous {
+  transform: translateY(18px) scale(0.992);
+  filter: blur(0.3px);
+  opacity: 0;
+}
+
+.page-turn-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  margin: 3.25rem -0.5rem -1.2rem;
+  border-top: 1px solid #edf1f2;
+  padding-top: 1.1rem;
+  color: #77888c;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.page-boundary-indicator {
+  position: sticky;
+  bottom: 14px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: fit-content;
+  min-width: 208px;
+  margin: -42px auto 0;
+  overflow: hidden;
+  border: 1px solid #dbe8e6;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 94%);
+  padding: 0.55rem 0.9rem;
+  box-shadow: 0 6px 20px rgb(15 35 42 / 9%);
+  color: #587278;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.page-boundary-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--color-brand-500);
+  transition: width 60ms linear;
+}
+
+.theme-night .page-turn-hint {
+  border-color: #304145;
+  color: #91a9ac;
+}
+
+.theme-night .page-boundary-indicator {
+  border-color: #2c4646;
+  background: rgb(22 33 36 / 94%);
+  color: #d8e5e4;
+}
+
+.reader-copy p {
+  margin-bottom: 1.15rem;
+  font-family: var(--font-reader);
+  font-size: 15.5px;
+  font-weight: 400;
+  line-height: 1.72;
+  letter-spacing: 0.008em;
+  color: #33424a;
+}
+
+.reader-heading {
+  font-family: var(--font-reader-heading);
+  letter-spacing: -0.025em;
+}
+
+.reader-section-heading {
+  margin: 2.35rem 0 1rem;
+  border-bottom: 1px solid #e3eaeb;
+  padding-bottom: 0.65rem;
+  font-family: var(--font-reader-heading);
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  color: #172f3a;
+}
+
+.reader-subheading {
+  margin: 2.15rem 0 0.85rem;
+  font-family: var(--font-reader-heading);
+  font-size: 18px;
+  font-weight: 630;
+  letter-spacing: -0.012em;
+  line-height: 1.42;
+  color: #163943;
+}
+
+.reader-list {
+  margin: 0.5rem 0 1.55rem;
+  padding-left: 1.45rem;
+  color: #33424a;
+}
+
+.reader-list li {
+  margin: 0.5rem 0;
+  padding-left: 0.3rem;
+  font-family: var(--font-reader);
+  font-size: 15.5px;
+  line-height: 1.68;
+}
+
+.reader-list li::marker {
+  color: var(--color-brand-600);
+}
+
+.normative-term {
+  border-radius: 0.28rem;
+  background: var(--color-brand-100);
+  padding: 0.06rem 0.24rem;
+  color: var(--color-brand-700);
+  font-weight: 600;
+}
+
+.command-term {
+  border: 1px solid #d7e4e4;
+  border-radius: 0.34rem;
+  background: #f5faf9;
+  padding: 0.08rem 0.34rem;
+  color: #0b5960;
+  font-family: "Cascadia Code", "Consolas", monospace;
+  font-size: 0.92em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.structured-contents {
+  margin-top: 0.5rem;
+}
+
+.contents-description {
+  margin-bottom: 1.65rem;
+  border-radius: 0.65rem;
+  background: #f5f8f8;
+  padding: 0.8rem 1rem;
+  color: #61747a;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.contents-entry {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+  gap: 0.55rem;
+  border-radius: 0.42rem;
+  padding-block: 0.38rem;
+  text-align: left;
+  color: #31454c;
+  transition:
+    color 120ms ease,
+    background-color 120ms ease;
+}
+
+.contents-entry:hover {
+  background: var(--color-brand-50);
+  color: var(--color-brand-700);
+}
+
+.contents-level-1 {
+  margin-top: 0.55rem;
+  font-size: 15.5px;
+  font-weight: 620;
+}
+
+.contents-level-2 {
+  padding-left: 1.15rem;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.contents-level-3 {
+  padding-left: 2.25rem;
+  font-size: 13.5px;
+  color: #52656b;
+}
+
+.contents-level-4 {
+  padding-left: 3.2rem;
+  font-size: 13px;
+  color: #66797e;
+}
+
+.contents-title {
+  min-width: 0;
+  line-height: 1.45;
+}
+
+.contents-leader {
+  min-width: 1.25rem;
+  flex: 1;
+  border-bottom: 1px dotted #bcc9cb;
+  transform: translateY(-0.24rem);
+}
+
+.contents-page {
+  flex-shrink: 0;
+  color: #63777b;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.reader-copy p.note {
+  margin: 1.25rem 0;
+  border-left: 3px solid var(--color-brand-500);
+  border-radius: 0 0.55rem 0.55rem 0;
+  background: var(--color-brand-50);
+  padding: 0.85rem 1rem;
+  font-family: var(--font-reader);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.theme-sepia .document-sheet {
+  background: #fff9ed;
+}
+
+.theme-sepia .reader-copy p {
+  color: #40362b;
+}
+
+.theme-sepia .reader-subheading,
+.theme-sepia .reader-section-heading {
+  color: #3b3228;
+}
+
+.theme-night .document-sheet {
+  background: #1b2528;
+  color: #eff5f5;
+}
+
+.theme-night .reader-copy p {
+  color: #e2ebea;
+}
+
+.theme-night .reader-subheading,
+.theme-night .reader-section-heading {
+  border-color: #304145;
+  color: #eff5f5;
+}
+
+.theme-night .reader-list {
+  color: #e2ebea;
+}
+
+.theme-night .normative-term {
+  background: #153e39;
+  color: #89e4d5;
+}
+
+.theme-night .command-term {
+  border-color: #315056;
+  background: #152a2f;
+  color: #9de8f0;
+}
+
+.theme-night .contents-description {
+  background: #243034;
+  color: #bfd0d0;
+}
+
+.theme-night .contents-entry {
+  color: #dce6e5;
+}
+
+.theme-night .contents-entry:hover {
+  background: #213b38;
+  color: #89e4d5;
+}
+
+.theme-night .contents-level-3,
+.theme-night .contents-level-4,
+.theme-night .contents-page {
+  color: #a6bcbd;
+}
+
+.theme-night .contents-leader {
+  border-color: #476064;
+}
+
+.theme-night .reader-copy p.note {
+  background: #163734;
+}
