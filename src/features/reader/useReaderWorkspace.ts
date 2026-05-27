@@ -16,7 +16,6 @@ import type {
   SearchFilters,
   SearchHit,
   SidePanel,
-  Theme,
   ToastMessage,
   ViewMode,
 } from "./types";
@@ -39,7 +38,6 @@ export function useReaderWorkspace() {
   const [contentsRange, setContentsRange] = useState<ContentsRange | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [viewMode, setViewMode] = useState<ViewMode>("reading");
-  const [theme, setTheme] = useState<Theme>("paper");
   const [sidePanel, setSidePanel] = useState<SidePanel>("search");
   const [zoom, setZoom] = useState(100);
   const [normativeHighlight, setNormativeHighlight] = useState(false);
@@ -459,7 +457,6 @@ export function useReaderWorkspace() {
     sectionTitle,
     sidePanel,
     storageLocation,
-    theme,
     viewMode,
     windowMaximized,
     zoom,
@@ -481,7 +478,6 @@ export function useReaderWorkspace() {
     setSearchQuery,
     setSearchFilters,
     setSidePanel,
-    setTheme,
     setNormativeHighlight,
     setZoom: updateViewZoom,
     updateLibrarySearch,

@@ -12,7 +12,7 @@ export function WorkspaceHeader({
   storageLocation: string;
 }) {
   return (
-    <header className="flex h-[54px] shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white px-5">
+    <header className="workspace-header flex h-[54px] shrink-0 items-center justify-between gap-4 border-b border-slate-200 bg-white px-5">
       <div className="flex min-w-0 items-center gap-3">
         <button
           aria-label="Back to Home"

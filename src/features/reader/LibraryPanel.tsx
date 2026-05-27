@@ -32,7 +32,7 @@ export function LibraryPanel({
   onSelectPage,
 }: LibraryPanelProps) {
   return (
-    <aside className="flex min-h-0 flex-col overflow-hidden border-r border-slate-200 bg-white">
+    <aside className="workspace-panel flex min-h-0 flex-col overflow-hidden border-r border-slate-200 bg-white">
       <PanelHeader icon={<BookOpenText size={15} />} title="Reading" />
 
       <div className="px-4 pt-3">

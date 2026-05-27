@@ -91,7 +91,7 @@ export function HomeView({
   }
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#f5f7f7]">
+    <main className="home-view flex min-h-0 flex-1 flex-col overflow-hidden bg-[#f5f7f7]">
       <header className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-8 py-6">
         <div>
           <div className="flex items-center gap-2 text-sm font-semibold text-brand-700">

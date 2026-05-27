@@ -20,6 +20,12 @@ const themeOptions: Array<{
     description: "Clear blue accents for a cooler workspace tone.",
     swatches: ["#2563b8", "#3182d4", "#dbeafe"],
   },
+  {
+    value: "mono",
+    label: "Mono",
+    description: "A dark graphite workspace with neutral contrast.",
+    swatches: ["#12151a", "#30353d", "#d1d5db"],
+  },
 ];
 
 export function SettingsPanel({
@@ -32,7 +38,7 @@ export function SettingsPanel({
   const selected = themeOptions.find((option) => option.value === colorTheme) ?? themeOptions[0];
 
   return (
-    <aside className="flex min-h-0 flex-col overflow-hidden border-r border-slate-200 bg-white">
+    <aside className="workspace-panel flex min-h-0 flex-col overflow-hidden border-r border-slate-200 bg-white">
       <PanelHeader icon={<Settings size={15} />} title="Settings" />
       <div className="scroll-pane min-h-0 flex-1 overflow-y-auto px-4 py-5">
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
@@ -66,9 +72,7 @@ export function SettingsPanel({
             ))}
           </div>
         </div>
-        <p className="mt-4 text-xs leading-5 text-slate-400">
-          Reading page colors remain available separately from the document toolbar.
-        </p>
+        <p className="mt-4 text-xs leading-5 text-slate-400">Theme changes apply across the entire workspace.</p>
       </div>
     </aside>
   );

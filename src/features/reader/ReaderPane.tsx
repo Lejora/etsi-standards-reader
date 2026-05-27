@@ -16,14 +16,13 @@ import { useEffect, useRef, type CSSProperties, type RefObject, type UIEventHand
 import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
 import { IconButton } from "../../components/ui/IconButton";
 import { HighlightedText } from "./HighlightedText";
-import type { OutlineItem, PageDirection, ReadingBlock, Theme, ViewMode } from "./types";
+import type { OutlineItem, PageDirection, ReadingBlock, ViewMode } from "./types";
 
 interface ReaderPaneProps {
   pdf: PDFDocumentProxy | null;
   viewMode: ViewMode;
   pageNumber: number;
   zoom: number;
-  theme: Theme;
   sectionTitle: string;
   isContentsPage: boolean;
   isFrontMatterPage: boolean;
@@ -42,7 +41,6 @@ interface ReaderPaneProps {
   onViewModeChange(mode: ViewMode): void;
   onPageChange(page: number): void;
   onZoomChange(zoom: number): void;
-  onThemeChange(theme: Theme): void;
   onNormativeHighlightChange(enabled: boolean): void;
   onScroll: UIEventHandler<HTMLDivElement>;
   onWheel: WheelEventHandler<HTMLDivElement>;
@@ -53,7 +51,6 @@ export function ReaderPane({
   viewMode,
   pageNumber,
   zoom,
-  theme,
   sectionTitle,
   isContentsPage,
   isFrontMatterPage,
@@ -72,13 +69,12 @@ export function ReaderPane({
   onViewModeChange,
   onPageChange,
   onZoomChange,
-  onThemeChange,
   onNormativeHighlightChange,
   onScroll,
   onWheel,
 }: ReaderPaneProps) {
   return (
-    <main className="flex min-h-0 min-w-0 flex-col overflow-hidden bg-[#f4f7f7]">
+    <main className="reader-pane flex min-h-0 min-w-0 flex-col overflow-hidden bg-[#f4f7f7]">
       <div className="flex h-[58px] shrink-0 items-center justify-between gap-3 overflow-x-auto border-b border-slate-200 bg-white px-5">
         <div className="flex shrink-0 items-center gap-3">
           <IconButton label="Toggle document panel">
@@ -155,7 +151,6 @@ export function ReaderPane({
             nextReadingPage={nextReadingPage}
             normativeHighlight={normativeHighlight}
             onPageChange={onPageChange}
-            onThemeChange={onThemeChange}
             onViewModeChange={onViewModeChange}
             outline={outline}
             pageNumber={pageNumber}
@@ -163,7 +158,6 @@ export function ReaderPane({
             pdf={pdf}
             readingBlocks={readingBlocks}
             sectionTitle={sectionTitle}
-            theme={theme}
             zoom={zoom}
           />
         ) : (
@@ -201,7 +195,6 @@ function EmptyReader({ onImport }: { onImport(): void }) {
 interface ReadingDocumentProps {
   pdf: PDFDocumentProxy;
   pageNumber: number;
-  theme: Theme;
   sectionTitle: string;
   isContentsPage: boolean;
   isFrontMatterPage: boolean;
@@ -214,14 +207,12 @@ interface ReadingDocumentProps {
   boundaryDirection: PageDirection;
   zoom: number;
   onViewModeChange(mode: ViewMode): void;
-  onThemeChange(theme: Theme): void;
   onPageChange(page: number): void;
 }
 
 function ReadingDocument({
   pdf,
   pageNumber,
-  theme,
   sectionTitle,
   isContentsPage,
   isFrontMatterPage,
@@ -234,7 +225,6 @@ function ReadingDocument({
   boundaryDirection,
   zoom,
   onViewModeChange,
-  onThemeChange,
   onPageChange,
 }: ReadingDocumentProps) {
   return (
@@ -245,19 +235,10 @@ function ReadingDocument({
         }`}
         style={{ "--reader-zoom": zoom / 100 } as CSSProperties}
       >
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex items-center">
           <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-600">
             Original page {pageNumber}
           </span>
-          <select
-            className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-600 outline-none"
-            value={theme}
-            onChange={(event) => onThemeChange(event.target.value as Theme)}
-          >
-            <option value="paper">Paper</option>
-            <option value="sepia">Sepia</option>
-            <option value="night">Night</option>
-          </select>
         </div>
         <h1 className="reader-heading mb-8 text-[32px] font-semibold leading-tight tracking-tight">{sectionTitle}</h1>
         {isFrontMatterPage ? (

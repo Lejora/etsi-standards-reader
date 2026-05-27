@@ -29,7 +29,7 @@ export function SearchPanel({
   const isIndexing = /\/|\d/.test(indexStatus) && !hasIndex;
 
   return (
-    <aside className="flex min-h-0 flex-col overflow-hidden border-r border-slate-200 bg-white">
+    <aside className="workspace-panel flex min-h-0 flex-col overflow-hidden border-r border-slate-200 bg-white">
       <PanelHeader icon={<FileSearch size={15} />} title="Search" />
 
       <div className="space-y-4 border-b border-slate-100 px-4 py-3">

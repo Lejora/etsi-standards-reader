@@ -19,7 +19,7 @@ function App() {
   const [selectedFolderId, setSelectedFolderId] = useState("etsi-documents");
   const [colorTheme, setColorTheme] = useState<ColorTheme>(() => {
     const savedTheme = window.localStorage.getItem(COLOR_THEME_STORAGE_KEY);
-    return savedTheme === "ocean" ? "ocean" : "forest";
+    return savedTheme === "ocean" || savedTheme === "mono" ? savedTheme : "forest";
   });
 
   useEffect(() => {
@@ -49,7 +49,7 @@ function App() {
 
   return (
     <div
-      className={`palette-${colorTheme} theme-${workspace.theme} flex h-screen min-h-0 flex-col overflow-hidden bg-[#f5f7f7] text-slate-800`}
+      className={`app-shell palette-${colorTheme} flex h-screen min-h-0 flex-col overflow-hidden bg-[#f5f7f7] text-slate-800`}
     >
       <TitleBar maximized={workspace.windowMaximized} />
       <div className="flex min-h-0 flex-1 overflow-hidden">
@@ -128,7 +128,6 @@ function App() {
                 onNormativeHighlightChange={workspace.setNormativeHighlight}
                 onPageChange={workspace.setPageNumber}
                 onScroll={workspace.handleReaderScroll}
-                onThemeChange={workspace.setTheme}
                 onViewModeChange={workspace.selectViewMode}
                 onWheel={workspace.handleReadingWheel}
                 onZoomChange={workspace.setZoom}
@@ -139,7 +138,6 @@ function App() {
                 readingBlocks={workspace.readingBlocks}
                 readingScrollRef={workspace.readingScrollRef}
                 sectionTitle={workspace.sectionTitle}
-                theme={workspace.theme}
                 viewMode={workspace.viewMode}
                 zoom={workspace.zoom}
               />

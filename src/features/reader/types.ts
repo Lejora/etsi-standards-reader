@@ -1,6 +1,5 @@
 export type ViewMode = "reading" | "original";
-export type Theme = "paper" | "night" | "sepia";
-export type ColorTheme = "forest" | "ocean";
+export type ColorTheme = "forest" | "ocean" | "mono";
 export type SidePanel = "search" | "notes";
 export type PageDirection = "next" | "previous";
 export type AppMode = "home" | "reader" | "search" | "settings";
