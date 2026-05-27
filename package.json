@@ -1,5 +1,6 @@
 {
   "name": "etsi-standards-reader",
+  "productName": "ETSI Standards Reader",
   "version": "0.1.0",
   "private": true,
   "description": "Local-first ETSI PDF reader with a structured reading mode.",
@@ -7,6 +8,7 @@
   "scripts": {
     "dev": "concurrently -k \"vite --host 127.0.0.1 --port 5173\" \"wait-on tcp:5173 && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .\"",
     "build": "tsc --noEmit && vite build",
+    "dist:win": "npm run build && electron-builder --win nsis --x64",
     "preview": "vite preview --host 127.0.0.1 --port 4173",
     "start": "electron ."
   },
@@ -25,9 +27,46 @@
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
     "electron": "^42.3.0",
+    "electron-builder": "^26.8.1",
     "tailwindcss": "^4.3.0",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
     "wait-on": "^8.0.3"
+  },
+  "build": {
+    "appId": "com.etsi.standards-reader",
+    "productName": "ETSI Standards Reader",
+    "asar": true,
+    "directories": {
+      "output": "release",
+      "buildResources": "assets"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "icon.ico",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ETSI Standards Reader",
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico"
+    }
   }
 }

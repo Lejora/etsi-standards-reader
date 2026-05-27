@@ -6,6 +6,7 @@ const path = require("node:path");
 
 const isDev = Boolean(process.env.VITE_DEV_SERVER_URL);
 let mainWindow;
+const APP_ID = "io.github.Lejora.etsi-standards-reader";
 const appIconPath = path.join(__dirname, "..", "assets", "icon.ico");
 const DEFAULT_FOLDER_ID = "etsi-documents";
 const DEFAULT_FOLDER = {
@@ -331,7 +332,7 @@ ipcMain.on("window:close", (event) => {
 });
 
 app.whenReady().then(() => {
-  app.setAppUserModelId("com.etsi.standards-reader");
+  app.setAppUserModelId(APP_ID);
   Menu.setApplicationMenu(createApplicationMenu());
   createWindow();
   app.on("activate", () => {
