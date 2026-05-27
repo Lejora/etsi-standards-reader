@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { SearchFilters } from "./types";
 
 const commandTerms = [
+  // Basic proactive UICC / CAT commands
   "DISPLAY TEXT",
   "GET INKEY",
   "GET INPUT",
@@ -10,19 +11,100 @@ const commandTerms = [
   "POLL INTERVAL",
   "REFRESH",
   "SET UP MENU",
+  "SET-UP MENU",
   "SELECT ITEM",
   "SEND SHORT MESSAGE",
+  "SEND SM",
+  "SEND SMS",
   "SEND SS",
   "SEND USSD",
   "SET UP CALL",
   "POLLING OFF",
   "PROVIDE LOCAL INFORMATION",
   "SET UP EVENT LIST",
+
+  // Multiple card / reader related
   "PERFORM CARD APDU",
   "POWER OFF CARD",
   "POWER ON CARD",
   "GET READER STATUS",
+
+  // Timer / idle / AT / language / browser
   "TIMER MANAGEMENT",
+  "SET UP IDLE MODE TEXT",
+  "RUN AT COMMAND",
+  "SEND DTMF",
+  "SEND DTMF COMMAND",
+  "LANGUAGE NOTIFICATION",
+  "LAUNCH BROWSER",
+
+  // Bearer Independent Protocol / BIP
+  "OPEN CHANNEL",
+  "CLOSE CHANNEL",
+  "RECEIVE DATA",
+  "SEND DATA",
+  "GET CHANNEL STATUS",
+  "SERVICE SEARCH",
+  "GET SERVICE INFORMATION",
+  "DECLARE SERVICE",
+
+  // Frames / display layout
+  "SET FRAMES",
+  "GET FRAME STATUS",
+  "GET FRAMES STATUS",
+
+  // Multimedia / MMS
+  "RETRIEVE MULTIMEDIA MESSAGE",
+  "SUBMIT MULTIMEDIA MESSAGE",
+  "DISPLAY MULTIMEDIA MESSAGE",
+
+  // Location / activation / contactless
+  "GEOGRAPHICAL LOCATION REQUEST",
+  "ACTIVATE",
+  "CONTACTLESS STATE CHANGED",
+
+  // eCAT / encapsulation / LSI
+  "COMMAND CONTAINER",
+  "ENCAPSULATED SESSION CONTROL",
+  "LSI COMMAND",
+
+  // CAT / USAT related terminal-to-UICC commands and procedures
+  // 厳密には proactive command ではないけど、ETSI CAT 文書上で command description として出るもの
+  "PROFILE DOWNLOAD",
+  "TERMINAL PROFILE",
+  "TERMINAL RESPONSE",
+  "FETCH",
+  "ENVELOPE",
+  "EVENT DOWNLOAD",
+  "MENU SELECTION",
+  "COMMAND RESULT",
+
+  // Specific ENVELOPE command names / variants
+  "ENVELOPE CALL CONTROL",
+  "ENVELOPE(CALL CONTROL)",
+  "ENVELOPE (CALL CONTROL)",
+  "ENVELOPE TIMER EXPIRATION",
+  "ENVELOPE(TIMER EXPIRATION)",
+  "ENVELOPE (TIMER EXPIRATION)",
+  "ENVELOPE TERMINAL APPLICATIONS",
+  "ENVELOPE(TERMINAL APPLICATIONS)",
+  "ENVELOPE (TERMINAL APPLICATIONS)",
+  "ENVELOPE ENVELOPE CONTAINER",
+  "ENVELOPE(ENVELOPE CONTAINER)",
+  "ENVELOPE (ENVELOPE CONTAINER)",
+  "ENVELOPE SERVICE LIST",
+  "ENVELOPE(SERVICE LIST)",
+  "ENVELOPE (SERVICE LIST)",
+
+  // Download / control command names often appearing in CAT/USAT sections
+  "SMS-PP DOWNLOAD",
+  "SMS PP DOWNLOAD",
+  "CELL BROADCAST DOWNLOAD",
+  "MMS NOTIFICATION DOWNLOAD",
+  "MMS TRANSFER STATUS",
+  "MO SHORT MESSAGE CONTROL",
+  "CALL CONTROL",
+  "GEOGRAPHICAL LOCATION REPORTING",
 ];
 
 function escapePattern(text: string) {
