@@ -16,7 +16,7 @@ import { useEffect, useRef, type CSSProperties, type RefObject, type UIEventHand
 import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
 import { IconButton } from "../../components/ui/IconButton";
 import { HighlightedText } from "./HighlightedText";
-import type { OutlineItem, PageDirection, ReadingBlock, ViewMode } from "./types";
+import type { OutlineItem, PageDirection, ReadingBlock, SearchFilters, ViewMode } from "./types";
 
 interface ReaderPaneProps {
   pdf: PDFDocumentProxy | null;
@@ -28,6 +28,8 @@ interface ReaderPaneProps {
   isFrontMatterPage: boolean;
   outline: OutlineItem[];
   readingBlocks: ReadingBlock[];
+  searchQuery: string;
+  searchFilters: SearchFilters;
   nextReadingPage: number;
   normativeHighlight: boolean;
   pageTransition: PageDirection | null;
@@ -56,6 +58,8 @@ export function ReaderPane({
   isFrontMatterPage,
   outline,
   readingBlocks,
+  searchQuery,
+  searchFilters,
   nextReadingPage,
   normativeHighlight,
   pageTransition,
@@ -157,6 +161,8 @@ export function ReaderPane({
             pageTransition={pageTransition}
             pdf={pdf}
             readingBlocks={readingBlocks}
+            searchFilters={searchFilters}
+            searchQuery={searchQuery}
             sectionTitle={sectionTitle}
             zoom={zoom}
           />
@@ -200,6 +206,8 @@ interface ReadingDocumentProps {
   isFrontMatterPage: boolean;
   outline: OutlineItem[];
   readingBlocks: ReadingBlock[];
+  searchQuery: string;
+  searchFilters: SearchFilters;
   normativeHighlight: boolean;
   nextReadingPage: number;
   pageTransition: PageDirection | null;
@@ -218,6 +226,8 @@ function ReadingDocument({
   isFrontMatterPage,
   outline,
   readingBlocks,
+  searchQuery,
+  searchFilters,
   normativeHighlight,
   nextReadingPage,
   pageTransition,
@@ -240,7 +250,15 @@ function ReadingDocument({
             Original page {pageNumber}
           </span>
         </div>
-        <h1 className="reader-heading mb-8 text-[32px] font-semibold leading-tight tracking-tight">{sectionTitle}</h1>
+        <h1 className="reader-heading mb-8 text-[32px] font-semibold leading-tight tracking-tight">
+          <HighlightedText
+            normativeHighlight={false}
+            searchFilters={searchFilters}
+            searchQuery={searchQuery}
+            semanticHighlight={false}
+            text={sectionTitle}
+          />
+        </h1>
         {isFrontMatterPage ? (
           <FrontMatterPreview pdf={pdf} pageNumber={pageNumber} onViewModeChange={onViewModeChange} />
         ) : (
@@ -252,9 +270,20 @@ function ReadingDocument({
           </div>
         )}
         {isFrontMatterPage ? null : isContentsPage ? (
-          <StructuredContents outline={outline} onPageChange={onPageChange} />
+          <StructuredContents
+            outline={outline}
+            onPageChange={onPageChange}
+            searchFilters={searchFilters}
+            searchQuery={searchQuery}
+          />
         ) : (
-          <ReadingBody blocks={readingBlocks} normativeHighlight={normativeHighlight} pageNumber={pageNumber} />
+          <ReadingBody
+            blocks={readingBlocks}
+            normativeHighlight={normativeHighlight}
+            pageNumber={pageNumber}
+            searchFilters={searchFilters}
+            searchQuery={searchQuery}
+          />
         )}
         {pageNumber < pdf.numPages && (
           <div className="page-turn-hint">
@@ -330,9 +359,13 @@ function FrontMatterPreview({
 function StructuredContents({
   outline,
   onPageChange,
+  searchFilters,
+  searchQuery,
 }: {
   outline: OutlineItem[];
   onPageChange(page: number): void;
+  searchFilters: SearchFilters;
+  searchQuery: string;
 }) {
   return (
     <nav className="structured-contents" aria-label="Structured document contents">
@@ -345,7 +378,15 @@ function StructuredContents({
           key={`${item.title}-${item.page}-${index}`}
           onClick={() => onPageChange(item.page)}
         >
-          <span className="contents-title">{item.title}</span>
+          <span className="contents-title">
+            <HighlightedText
+              normativeHighlight={false}
+              searchFilters={searchFilters}
+              searchQuery={searchQuery}
+              semanticHighlight={false}
+              text={item.title}
+            />
+          </span>
           <span className="contents-leader" />
           <span className="contents-page">{item.page}</span>
         </button>
@@ -358,10 +399,14 @@ function ReadingBody({
   blocks,
   normativeHighlight,
   pageNumber,
+  searchFilters,
+  searchQuery,
 }: {
   blocks: ReadingBlock[];
   normativeHighlight: boolean;
   pageNumber: number;
+  searchFilters: SearchFilters;
+  searchQuery: string;
 }) {
   return (
     <div className="reader-copy">
@@ -372,7 +417,13 @@ function ReadingBody({
               className={block.level <= 2 ? "reader-section-heading" : "reader-subheading"}
               key={`${pageNumber}-heading-${index}`}
             >
-              {block.text}
+              <HighlightedText
+                normativeHighlight={false}
+                searchFilters={searchFilters}
+                searchQuery={searchQuery}
+                semanticHighlight={false}
+                text={block.text}
+              />
             </h2>
           );
         }
@@ -381,7 +432,12 @@ function ReadingBody({
             <ul className="reader-list" key={`${pageNumber}-list-${index}`}>
               {block.items.map((item) => (
                 <li key={item}>
-                  <HighlightedText normativeHighlight={normativeHighlight} text={item} />
+                  <HighlightedText
+                    normativeHighlight={normativeHighlight}
+                    searchFilters={searchFilters}
+                    searchQuery={searchQuery}
+                    text={item}
+                  />
                 </li>
               ))}
             </ul>
@@ -389,7 +445,12 @@ function ReadingBody({
         }
         return (
           <p key={`${pageNumber}-paragraph-${index}`} className={block.emphasis === "note" ? "note" : ""}>
-            <HighlightedText normativeHighlight={normativeHighlight} text={block.text} />
+            <HighlightedText
+              normativeHighlight={normativeHighlight}
+              searchFilters={searchFilters}
+              searchQuery={searchQuery}
+              text={block.text}
+            />
           </p>
         );
       })}

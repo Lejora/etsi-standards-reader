@@ -137,6 +137,8 @@ function App() {
                 pdf={workspace.pdf}
                 readingBlocks={workspace.readingBlocks}
                 readingScrollRef={workspace.readingScrollRef}
+                searchFilters={workspace.searchFilters}
+                searchQuery={activeMode === "search" ? workspace.searchQuery : ""}
                 sectionTitle={workspace.sectionTitle}
                 viewMode={workspace.viewMode}
                 zoom={workspace.zoom}

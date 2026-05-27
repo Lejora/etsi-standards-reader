@@ -347,6 +347,14 @@ button:disabled {
   font-weight: 600;
 }
 
+.search-term {
+  border-radius: 0.2rem;
+  background: #ffe58a;
+  padding: 0.04rem 0.14rem;
+  color: #312300;
+  font-weight: 600;
+}
+
 .command-term {
   border: 1px solid var(--color-brand-100);
   border-radius: 0.34rem;
@@ -482,6 +490,11 @@ button:disabled {
 .palette-mono .normative-term {
   background: #31363e;
   color: #f0f2f5;
+}
+
+.palette-mono .search-term {
+  background: #e2ba4c;
+  color: #17130a;
 }
 
 .palette-mono .command-term {

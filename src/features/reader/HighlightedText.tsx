@@ -1,3 +1,6 @@
+import type { ReactNode } from "react";
+import type { SearchFilters } from "./types";
+
 const commandTerms = [
   "DISPLAY TEXT",
   "GET INKEY",
@@ -36,29 +39,59 @@ const fullHighlightPattern = new RegExp(`\\b(shall not|shall|should|may|${comman
 const normativePattern = /^(shall not|shall|should|may)$/i;
 const commandOnlyPattern = new RegExp(`^(?:${commandPattern})$`, "i");
 
+function createSearchPattern(searchQuery: string, searchFilters: SearchFilters) {
+  const query = searchQuery.trim();
+  if (!query) return null;
+  const terms = searchFilters.mode === "all" ? query.split(/\s+/).filter(Boolean) : [query];
+  const pattern = terms.sort((left, right) => right.length - left.length).map(escapePattern).join("|");
+  const boundary = searchFilters.wholeWord ? "\\b" : "";
+  return new RegExp(`(${boundary}(?:${pattern})${boundary})`, searchFilters.matchCase ? "g" : "gi");
+}
+
+function applySearchHighlight(text: string, pattern: RegExp | null, keyPrefix: string): ReactNode {
+  if (!pattern) return text;
+  return text.split(pattern).map((part, index) =>
+    index % 2 === 1 ? (
+      <mark className="search-term" key={`${keyPrefix}-search-${index}`}>
+        {part}
+      </mark>
+    ) : (
+      <span key={`${keyPrefix}-text-${index}`}>{part}</span>
+    ),
+  );
+}
+
 export function HighlightedText({
   text,
   normativeHighlight,
+  searchQuery = "",
+  searchFilters,
+  semanticHighlight = true,
 }: {
   text: string;
   normativeHighlight: boolean;
+  searchQuery?: string;
+  searchFilters?: SearchFilters;
+  semanticHighlight?: boolean;
 }) {
-  const chunks = text.split(normativeHighlight ? fullHighlightPattern : commandHighlightPattern);
+  const searchPattern = searchFilters ? createSearchPattern(searchQuery, searchFilters) : null;
+  const chunks = semanticHighlight ? text.split(normativeHighlight ? fullHighlightPattern : commandHighlightPattern) : [text];
   return (
     <>
-      {chunks.map((chunk, index) =>
-        normativeHighlight && normativePattern.test(chunk) ? (
+      {chunks.map((chunk, index) => {
+        const content = applySearchHighlight(chunk, searchPattern, `${chunk}-${index}`);
+        return normativeHighlight && semanticHighlight && normativePattern.test(chunk) ? (
           <mark className="normative-term" key={`${chunk}-${index}`}>
-            {chunk}
+            {content}
           </mark>
-        ) : commandOnlyPattern.test(chunk) ? (
+        ) : semanticHighlight && commandOnlyPattern.test(chunk) ? (
           <code className="command-term" key={`${chunk}-${index}`}>
-            {chunk}
+            {content}
           </code>
         ) : (
-          <span key={`${chunk}-${index}`}>{chunk}</span>
-        ),
-      )}
+          <span key={`${chunk}-${index}`}>{content}</span>
+        );
+      })}
     </>
   );
 }
