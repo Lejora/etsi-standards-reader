@@ -54,8 +54,10 @@
       "dist/**/*",
       "electron/**/*",
       "assets/**/*",
-      "package.json"
+      "package.json",
+      "!node_modules/**/*"
     ],
+    "afterPack": "electron/afterPack.cjs",
     "win": {
       "target": [
         {
