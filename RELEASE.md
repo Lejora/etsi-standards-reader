@@ -47,6 +47,10 @@ The repository includes `.github/workflows/release.yml`.
 4. If a signing certificate is added later, update the workflow to pass the
    signing secrets before publishing the installer.
 
+The workflow uses `npm install` instead of `npm ci` because the current
+Tailwind optional WASM package metadata can make `npm ci` reject the lockfile
+even after a normal install succeeds.
+
 ## GitHub Release Notes
 
 Use the `CHANGELOG.md` section for the release version as the release body.
