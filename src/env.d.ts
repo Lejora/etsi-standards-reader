@@ -37,6 +37,8 @@ interface Window {
     importDroppedPdfs(files: File[], folderId?: string): Promise<ImportResult[]>;
     readPdf(documentId: string): Promise<Uint8Array>;
     downloadPdf(documentId: string): Promise<DownloadResult>;
+    deleteDocument(documentId: string): Promise<ManagedDocument[]>;
+    revealDocument(documentId: string): Promise<void>;
     getLocation(): Promise<string>;
   };
   etsiClipboard?: {

@@ -17,6 +17,22 @@ const DEFAULT_FOLDER = {
 };
 
 function createApplicationMenu() {
+  const viewSubmenu = [
+    ...(isDev
+      ? [
+          { role: "reload" },
+          { role: "forceReload" },
+          { role: "toggleDevTools" },
+          { type: "separator" },
+        ]
+      : []),
+    { role: "resetZoom" },
+    { role: "zoomIn" },
+    { role: "zoomOut" },
+    { type: "separator" },
+    { role: "togglefullscreen" },
+  ];
+
   return Menu.buildFromTemplate([
     {
       label: "File",
@@ -36,23 +52,52 @@ function createApplicationMenu() {
     },
     {
       label: "View",
-      submenu: [
-        { role: "reload" },
-        { role: "forceReload" },
-        { role: "toggleDevTools" },
-        { type: "separator" },
-        { role: "resetZoom" },
-        { role: "zoomIn" },
-        { role: "zoomOut" },
-        { type: "separator" },
-        { role: "togglefullscreen" },
-      ],
+      submenu: viewSubmenu,
     },
     {
       label: "Window",
       submenu: [{ role: "minimize" }, { role: "close" }],
     },
   ]);
+}
+
+function isTrustedIpcSender(event) {
+  const senderUrl = event.senderFrame?.url ?? event.sender.getURL();
+  if (!senderUrl) return false;
+  if (isDev) {
+    return senderUrl.startsWith("http://127.0.0.1:5173/") || senderUrl.startsWith("http://localhost:5173/");
+  }
+  try {
+    const url = new URL(senderUrl);
+    if (url.protocol !== "file:") return false;
+    const trustedPath = path.join(__dirname, "..", "dist", "index.html").replace(/\\/g, "/");
+    const senderPath = decodeURIComponent(url.pathname)
+      .replace(/^\/([A-Za-z]:)/, "$1")
+      .replace(/\\/g, "/");
+    return senderPath === trustedPath;
+  } catch {
+    return false;
+  }
+}
+
+function assertTrustedIpcSender(event) {
+  if (!isTrustedIpcSender(event)) {
+    throw new Error("Blocked IPC from an untrusted sender.");
+  }
+}
+
+function handleTrusted(channel, listener) {
+  ipcMain.handle(channel, async (event, ...args) => {
+    assertTrustedIpcSender(event);
+    return listener(event, ...args);
+  });
+}
+
+function onTrusted(channel, listener) {
+  ipcMain.on(channel, (event, ...args) => {
+    if (!isTrustedIpcSender(event)) return;
+    listener(event, ...args);
+  });
 }
 
 function libraryPaths() {
@@ -182,6 +227,32 @@ async function copyDocumentToDownloads(documentId) {
   return { fileName: path.basename(destinationPath), path: destinationPath };
 }
 
+async function deleteManagedDocument(documentId) {
+  const documents = await readManifest();
+  const document = documents.find((candidate) => candidate.id === documentId);
+  if (!document) {
+    throw new Error("Document not found.");
+  }
+
+  const remainingDocuments = documents.filter((candidate) => candidate.id !== documentId);
+  await writeManifest(remainingDocuments);
+  if (!remainingDocuments.some((candidate) => candidate.storedFileName === document.storedFileName)) {
+    const { originals } = await ensureLibrary();
+    await fsp.rm(path.join(originals, document.storedFileName), { force: true });
+  }
+  return remainingDocuments;
+}
+
+async function revealManagedDocument(documentId) {
+  const documents = await readManifest();
+  const document = documents.find((candidate) => candidate.id === documentId);
+  if (!document) {
+    throw new Error("Document not found.");
+  }
+  const { originals } = await ensureLibrary();
+  shell.showItemInFolder(path.join(originals, document.storedFileName));
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1460,
@@ -225,11 +296,11 @@ function createWindow() {
   }
 }
 
-ipcMain.handle("library:list", async () => readManifest());
+handleTrusted("library:list", async () => readManifest());
 
-ipcMain.handle("library:list-folders", async () => readFolders());
+handleTrusted("library:list-folders", async () => readFolders());
 
-ipcMain.handle("library:create-folder", async (_event, name) => {
+handleTrusted("library:create-folder", async (_event, name) => {
   const normalizedName = String(name ?? "").trim().replace(/\s+/g, " ");
   if (!normalizedName) {
     throw new Error("Folder name is required.");
@@ -249,7 +320,7 @@ ipcMain.handle("library:create-folder", async (_event, name) => {
   return folder;
 });
 
-ipcMain.handle("library:move-document", async (_event, documentId, folderId) => {
+handleTrusted("library:move-document", async (_event, documentId, folderId) => {
   const documents = await readManifest();
   const folders = await readFolders();
   if (!folders.some((folder) => folder.id === folderId)) {
@@ -264,7 +335,7 @@ ipcMain.handle("library:move-document", async (_event, documentId, folderId) => 
   return document;
 });
 
-ipcMain.handle("library:import-pdf", async (_event, folderId) => {
+handleTrusted("library:import-pdf", async (_event, folderId) => {
   const choice = await dialog.showOpenDialog(mainWindow, {
     title: "Import ETSI PDF documents",
     properties: ["openFile", "multiSelections"],
@@ -277,7 +348,7 @@ ipcMain.handle("library:import-pdf", async (_event, folderId) => {
   return Promise.all(choice.filePaths.map((filePath) => importPdf(filePath, resolvedFolderId)));
 });
 
-ipcMain.handle("library:import-dropped-pdfs", async (_event, filePaths, folderId) => {
+handleTrusted("library:import-dropped-pdfs", async (_event, filePaths, folderId) => {
   const pdfPaths = Array.isArray(filePaths)
     ? filePaths.filter((filePath) => typeof filePath === "string" && path.extname(filePath).toLowerCase() === ".pdf")
     : [];
@@ -288,7 +359,7 @@ ipcMain.handle("library:import-dropped-pdfs", async (_event, filePaths, folderId
   return Promise.all(pdfPaths.map((filePath) => importPdf(filePath, resolvedFolderId)));
 });
 
-ipcMain.handle("library:read-pdf", async (_event, documentId) => {
+handleTrusted("library:read-pdf", async (_event, documentId) => {
   const documents = await readManifest();
   const document = documents.find((candidate) => candidate.id === documentId);
   if (!document) {
@@ -298,26 +369,31 @@ ipcMain.handle("library:read-pdf", async (_event, documentId) => {
   return fsp.readFile(path.join(originals, document.storedFileName));
 });
 
-ipcMain.handle("library:download-pdf", async (_event, documentId) => copyDocumentToDownloads(documentId));
-ipcMain.handle("clipboard:write-text", async (_event, text) => {
+handleTrusted("library:download-pdf", async (_event, documentId) => copyDocumentToDownloads(documentId));
+
+handleTrusted("library:delete-document", async (_event, documentId) => deleteManagedDocument(documentId));
+
+handleTrusted("library:reveal-document", async (_event, documentId) => revealManagedDocument(documentId));
+
+handleTrusted("clipboard:write-text", async (_event, text) => {
   clipboard.writeText(String(text ?? ""));
 });
 
-ipcMain.handle("library:location", async () => {
+handleTrusted("library:location", async () => {
   const { root } = await ensureLibrary();
   return root;
 });
 
-ipcMain.handle("window:is-maximized", (event) => {
+handleTrusted("window:is-maximized", (event) => {
   const window = BrowserWindow.fromWebContents(event.sender);
   return window?.isMaximized() ?? false;
 });
 
-ipcMain.on("window:minimize", (event) => {
+onTrusted("window:minimize", (event) => {
   BrowserWindow.fromWebContents(event.sender)?.minimize();
 });
 
-ipcMain.on("window:toggle-maximize", (event) => {
+onTrusted("window:toggle-maximize", (event) => {
   const window = BrowserWindow.fromWebContents(event.sender);
   if (!window) return;
   if (window.isMaximized()) {
@@ -327,7 +403,7 @@ ipcMain.on("window:toggle-maximize", (event) => {
   }
 });
 
-ipcMain.on("window:close", (event) => {
+onTrusted("window:close", (event) => {
   BrowserWindow.fromWebContents(event.sender)?.close();
 });
 

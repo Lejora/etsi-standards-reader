@@ -14,6 +14,8 @@ contextBridge.exposeInMainWorld("etsiLibrary", {
     ),
   readPdf: (documentId) => ipcRenderer.invoke("library:read-pdf", documentId),
   downloadPdf: (documentId) => ipcRenderer.invoke("library:download-pdf", documentId),
+  deleteDocument: (documentId) => ipcRenderer.invoke("library:delete-document", documentId),
+  revealDocument: (documentId) => ipcRenderer.invoke("library:reveal-document", documentId),
   getLocation: () => ipcRenderer.invoke("library:location"),
 });
 

@@ -73,8 +73,12 @@ function App() {
               onCreateFolder={workspace.createFolder}
               onImport={(folderId) => void workspace.importDocuments(folderId, false)}
               onImportFiles={(files, folderId) => void workspace.importDroppedDocuments(files, folderId)}
+              onCopyCitation={(document) => void workspace.copyDocumentCitation(document)}
+              onDownloadDocument={(documentId) => void workspace.downloadDocument(documentId)}
               onMoveDocument={workspace.moveDocument}
+              onRemoveDocument={(documentId) => void workspace.deleteDocument(documentId)}
               onSelectFolder={setSelectedFolderId}
+              onRevealDocument={(documentId) => void workspace.revealDocument(documentId)}
               onOpenDocument={(document) => {
                 setSelectedFolderId(document.folderId);
                 setActiveMode("reader");

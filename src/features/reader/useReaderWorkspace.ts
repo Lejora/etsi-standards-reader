@@ -170,13 +170,36 @@ export function useReaderWorkspace() {
     }
   }
 
-  async function downloadDocument() {
-    if (!window.etsiLibrary || !activeDocument) return;
+  async function downloadDocument(documentId = activeDocument?.id) {
+    if (!window.etsiLibrary || !documentId) return;
     try {
-      const result = await window.etsiLibrary.downloadPdf(activeDocument.id);
+      const result = await window.etsiLibrary.downloadPdf(documentId);
       pushToast(`Downloaded "${result.fileName}" to Downloads.`);
     } catch {
       pushToast("Unable to download the original PDF.", "error");
+    }
+  }
+
+  async function deleteDocument(documentId: string) {
+    if (!window.etsiLibrary) return;
+    try {
+      const updatedDocuments = await window.etsiLibrary.deleteDocument(documentId);
+      setDocuments(updatedDocuments);
+      if (activeDocument?.id === documentId) {
+        clearDocument();
+      }
+      pushToast("Document removed from the library.");
+    } catch {
+      pushToast("Unable to remove the document.", "error");
+    }
+  }
+
+  async function revealDocument(documentId: string) {
+    if (!window.etsiLibrary) return;
+    try {
+      await window.etsiLibrary.revealDocument(documentId);
+    } catch {
+      pushToast("Unable to show the stored PDF.", "error");
     }
   }
 
@@ -350,6 +373,18 @@ export function useReaderWorkspace() {
     }
   }
 
+  async function copyDocumentCitation(document: ManagedDocument) {
+    if (!window.etsiClipboard) return;
+    const importedAt = new Date(document.importedAt).toLocaleDateString();
+    const citation = `${document.fileName} | Managed PDF | Imported ${importedAt}`;
+    try {
+      await window.etsiClipboard.writeText(citation);
+      pushToast("Citation copied to clipboard.");
+    } catch {
+      pushToast("Unable to copy the citation.", "error");
+    }
+  }
+
   function resetBoundaryProgress() {
     boundaryDeltaRef.current = 0;
     setBoundaryProgress(0);
@@ -457,7 +492,10 @@ export function useReaderWorkspace() {
     toasts,
     dismissToast,
     downloadDocument,
+    deleteDocument,
+    revealDocument,
     copyCitation,
+    copyDocumentCitation,
     handleReaderScroll,
     handleReadingWheel,
     createFolder,

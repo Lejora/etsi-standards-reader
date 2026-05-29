@@ -1,5 +1,18 @@
 import { useMemo, useState, type DragEvent } from "react";
-import { FileText, FolderClosed, FolderPlus, GripVertical, LibraryBig, Plus, Upload } from "lucide-react";
+import {
+  Copy,
+  Download,
+  FileText,
+  FolderClosed,
+  FolderOpen,
+  FolderPlus,
+  GripVertical,
+  LibraryBig,
+  MoreVertical,
+  Plus,
+  Trash2,
+  Upload,
+} from "lucide-react";
 
 const DOCUMENT_DRAG_TYPE = "application/x-etsi-document-id";
 
@@ -15,8 +28,12 @@ export function HomeView({
   onCreateFolder,
   onImport,
   onImportFiles,
+  onCopyCitation,
+  onDownloadDocument,
   onMoveDocument,
   onOpenDocument,
+  onRemoveDocument,
+  onRevealDocument,
   onSelectFolder,
 }: {
   activeDocument: ManagedDocument | null;
@@ -26,8 +43,12 @@ export function HomeView({
   onCreateFolder(name: string): Promise<LibraryFolder>;
   onImport(folderId: string): void;
   onImportFiles(files: File[], folderId: string): void;
+  onCopyCitation(document: ManagedDocument): void;
+  onDownloadDocument(documentId: string): void;
   onMoveDocument(documentId: string, folderId: string): Promise<void>;
   onOpenDocument(document: ManagedDocument): void;
+  onRemoveDocument(documentId: string): void;
+  onRevealDocument(documentId: string): void;
   onSelectFolder(folderId: string): void;
 }) {
   const [newFolderName, setNewFolderName] = useState("");
@@ -35,6 +56,7 @@ export function HomeView({
   const [folderError, setFolderError] = useState("");
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
   const [isUploadDropTarget, setIsUploadDropTarget] = useState(false);
+  const [menuDocumentId, setMenuDocumentId] = useState<string | null>(null);
   const selectedFolder = folders.find((folder) => folder.id === selectedFolderId) ?? folders[0];
   const visibleDocuments = useMemo(
     () => documents.filter((document) => document.folderId === selectedFolder?.id),
@@ -88,6 +110,15 @@ export function HomeView({
     setIsUploadDropTarget(false);
     const files = Array.from(event.dataTransfer.files);
     if (files.length) onImportFiles(files, selectedFolder?.id ?? "etsi-documents");
+  }
+
+  function removeDocument(document: ManagedDocument) {
+    const confirmed = window.confirm(
+      `Remove "${document.fileName}" from the library? The managed copy will be deleted.`,
+    );
+    if (!confirmed) return;
+    setMenuDocumentId(null);
+    onRemoveDocument(document.id);
   }
 
   return (
@@ -223,6 +254,60 @@ export function HomeView({
                   <span className="block truncate text-sm font-medium text-slate-800">{document.fileName}</span>
                   <span className="mt-1 block text-xs text-slate-400">{bytesLabel(document.byteSize)}</span>
                 </button>
+                <div className="relative shrink-0" onMouseDown={(event) => event.stopPropagation()}>
+                  <button
+                    aria-label={`Actions for ${document.fileName}`}
+                    className="grid size-9 place-items-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-700"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setMenuDocumentId((current) => (current === document.id ? null : document.id));
+                    }}
+                  >
+                    <MoreVertical size={17} />
+                  </button>
+                  {menuDocumentId === document.id && (
+                    <div className="absolute right-0 top-10 z-30 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-xl">
+                      <button
+                        className="flex w-full items-center gap-3 px-3 py-2 text-left text-slate-600 hover:bg-slate-50"
+                        onClick={() => {
+                          setMenuDocumentId(null);
+                          onDownloadDocument(document.id);
+                        }}
+                      >
+                        <Download size={15} />
+                        Download original
+                      </button>
+                      <button
+                        className="flex w-full items-center gap-3 px-3 py-2 text-left text-slate-600 hover:bg-slate-50"
+                        onClick={() => {
+                          setMenuDocumentId(null);
+                          onRevealDocument(document.id);
+                        }}
+                      >
+                        <FolderOpen size={15} />
+                        Show in storage
+                      </button>
+                      <button
+                        className="flex w-full items-center gap-3 px-3 py-2 text-left text-slate-600 hover:bg-slate-50"
+                        onClick={() => {
+                          setMenuDocumentId(null);
+                          onCopyCitation(document);
+                        }}
+                      >
+                        <Copy size={15} />
+                        Copy citation
+                      </button>
+                      <div className="my-1 border-t border-slate-100" />
+                      <button
+                        className="flex w-full items-center gap-3 px-3 py-2 text-left text-red-600 hover:bg-red-50"
+                        onClick={() => removeDocument(document)}
+                      >
+                        <Trash2 size={15} />
+                        Remove from library
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
             {!visibleDocuments.length && (
