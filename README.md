@@ -1,14 +1,29 @@
 # ETSI Standards Reader
 
-ETSI Standards Reader は、ETSI 規格書の PDF をローカルで整理・閲覧・検索するための Windows 向け Electron デスクトップアプリです。
+ETSI Standards Reader は、ETSI 規格書の PDF をローカルで整理・閲覧・検索するための Windows 向けデスクトップアプリです。
 
-取り込んだ PDF はアプリの管理領域へコピーされ、フォルダ単位で整理できます。
-文書は原本 PDF 表示に加えて、抽出した本文と見出し構造を読みやすく再構成した Reading モードで閲覧できます。
-図表や数式など正確な確認が必要な箇所は、原本 PDF へ戻って参照できる設計です。
-将来的には Reading モードに図表を取り込みます。
+Electron と React で構築されており、技術仕様書を落ち着いて読むためのローカルファーストなワークフローを重視しています。</br>
+取り込んだ PDF はアプリの管理領域へコピーされ、フォルダ分け、検索、原本 PDF 表示、本文を読みやすく再構成した Reading モードでの閲覧ができます。
 
-PDF の本文は取り込み後にインデックス化され、キーワードやページ範囲による検索が可能です。すべての文書処理と保存はローカルで完結し、
-規格調査のための落ち着いた読書環境と原本参照性の両立を目指しています。
+> Status: early pre-release  
+> 現在の Windows インストーラーは未署名です
+
+## 特徴
+
+- ローカル PDF ライブラリ管理
+- フォルダ単位のドキュメント整理
+- PDF のドラッグ & ドロップ取り込み
+- 原本 PDF ビュー
+- PDF から抽出した本文を読みやすく再構成する Reading モード
+- 取り込み済み PDF の検索インデックス作成
+- Reader 上での検索ヒットハイライト
+- Copy Citation 機能
+- 原本 PDF を Downloads フォルダへ書き出す Download 機能
+- Forest / Ocean / Mono テーマ
+- GitHub Releases による Windows インストーラー配布
+
+## スクリーンショット
 
 
-<img width="1645" height="1209" alt="0b84f44316d9365afc01d94e7c51713c" src="https://github.com/user-attachments/assets/cd050de8-03f7-4d62-85bb-0d584543255a" />
+<img width="1460" height="1298" alt="image" src="https://github.com/user-attachments/assets/22037543-a52d-4c09-9a25-e205dcdc8881" />
+<img width="1456" height="1124" alt="image" src="https://github.com/user-attachments/assets/5216a5f4-07cd-4274-855b-4e4abab4630c" />
