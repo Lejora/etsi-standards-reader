@@ -33,5 +33,3 @@ jobs:
         run: npm run publish:github
         env:
           GH_TOKEN: ${{ github.token }}
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}

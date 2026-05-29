@@ -10,4 +10,9 @@ ETSI Standards Reader は、ETSI 規格書の PDF をローカルで整理・閲
 PDF の本文は取り込み後にインデックス化され、キーワードやページ範囲による検索が可能です。すべての文書処理と保存はローカルで完結し、
 規格調査のための落ち着いた読書環境と原本参照性の両立を目指しています。
 
+## 配布について
+
+初期リリースの Windows インストーラーは未署名です。そのため、Windows SmartScreen や Defender による警告が表示される場合があります。
+署名は利用状況を見て必要になった段階で追加します。
+
 <img width="1645" height="1209" alt="0b84f44316d9365afc01d94e7c51713c" src="https://github.com/user-attachments/assets/cd050de8-03f7-4d62-85bb-0d584543255a" />

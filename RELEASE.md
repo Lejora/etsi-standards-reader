@@ -13,14 +13,18 @@ For GitHub publishing from a local machine, set a `GH_TOKEN` or
 `GITHUB_RELEASE_TOKEN` environment variable with permission to create releases
 and upload release assets.
 
-For Windows code signing, provide one of the following before public release:
+Windows code signing is optional for this project at the current stage.
+Unsigned installers are acceptable for the first GitHub Releases, but Windows
+may show a SmartScreen or security warning when users launch the installer.
+
+If signing becomes necessary later, provide one of the following:
 
 - A PFX/P12 code signing certificate and password, exposed to electron-builder
   as `CSC_LINK` and `CSC_KEY_PASSWORD`.
 - A configured Windows signing provider such as Azure Trusted Signing.
 
-Unsigned installers can be produced for internal testing, but they are not
-ready for public distribution.
+Do not block the release solely on signing while the app is still in early
+distribution.
 
 ## Local Release Build
 
@@ -37,11 +41,11 @@ ready for public distribution.
 
 The repository includes `.github/workflows/release.yml`.
 
-1. Add `CSC_LINK` and `CSC_KEY_PASSWORD` repository secrets when a Windows code
-   signing certificate is available.
-2. Push a version tag such as `v0.1.0`, or run the workflow manually.
-3. Review the generated draft release on GitHub.
-4. Publish the draft after the smoke test passes.
+1. Push a version tag such as `v0.1.0`, or run the workflow manually.
+2. Review the generated draft release on GitHub.
+3. Publish the draft after the smoke test passes.
+4. If a signing certificate is added later, update the workflow to pass the
+   signing secrets before publishing the installer.
 
 ## GitHub Release Notes
 
