@@ -175,9 +175,23 @@ export function ReaderPane({
             zoom={zoom}
           />
         ) : (
-          <div className="mx-auto flex min-h-full max-w-max justify-center rounded-sm bg-white p-1 shadow-[0_2px_12px_rgba(16,24,40,0.12)]">
-            <canvas ref={canvasRef} className="block max-w-full" />
-          </div>
+          <>
+            <div
+              className={`mx-auto flex min-h-full max-w-max justify-center rounded-sm bg-white p-1 shadow-[0_2px_12px_rgba(16,24,40,0.12)] ${
+                pageTransition ? `page-transition-${pageTransition}` : ""
+              }`}
+            >
+              <canvas ref={canvasRef} className="block max-w-full" />
+            </div>
+            {boundaryProgress > 0 && (
+              <div className="page-boundary-indicator">
+                <div className="page-boundary-progress" style={{ width: `${boundaryProgress}%` }} />
+                <span>
+                  {boundaryDirection === "next" ? "Scroll to turn next page" : "Scroll to return to previous page"}
+                </span>
+              </div>
+            )}
+          </>
         )}
       </div>
     </main>

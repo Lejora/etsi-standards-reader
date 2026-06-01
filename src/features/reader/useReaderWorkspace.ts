@@ -265,7 +265,13 @@ export function useReaderWorkspace() {
       canvas.width = viewport.width;
       canvas.height = viewport.height;
       renderTask = page.render({ canvas, canvasContext: context, viewport });
-      return renderTask.promise;
+      return renderTask.promise.then(() => {
+        const pendingTurn = pendingTurnRef.current;
+        const container = readingScrollRef.current;
+        if (!container || pendingTurn?.page !== pageNumber) return;
+        container.scrollTop = pendingTurn.position === "top" ? 0 : container.scrollHeight;
+        pendingTurnRef.current = null;
+      });
     });
     return () => renderTask?.cancel();
   }, [pageNumber, pdf, viewMode, zoom]);
@@ -407,6 +413,19 @@ export function useReaderWorkspace() {
     }, 170);
   }
 
+  function changeOriginalPage(direction: PageDirection) {
+    if (!pdf || pageTransition) return;
+    const target = direction === "next" ? pageNumber + 1 : pageNumber - 1;
+    if (target < 1 || target > pdf.numPages) return;
+    setPageTransition(direction);
+    resetBoundaryProgress();
+    transitionTimeoutRef.current = window.setTimeout(() => {
+      pendingTurnRef.current = { page: target, position: direction === "next" ? "top" : "bottom" };
+      setPageNumber(target);
+      requestAnimationFrame(() => setPageTransition(null));
+    }, 170);
+  }
+
   function selectViewMode(nextMode: ViewMode) {
     const container = readingScrollRef.current;
     if (viewModeRef.current === "reading" && container) {
@@ -429,7 +448,7 @@ export function useReaderWorkspace() {
       return;
     }
 
-    if (viewMode !== "reading" || !pdf || pageTransition) return;
+    if (!pdf || pageTransition) return;
     const container = event.currentTarget;
     const atBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 2;
     const atTop = container.scrollTop <= 2;
@@ -453,7 +472,13 @@ export function useReaderWorkspace() {
     const progress = Math.min(100, (Math.abs(boundaryDeltaRef.current) / 150) * 100);
     setBoundaryDirection(direction);
     setBoundaryProgress(progress);
-    if (progress >= 100) changeReadingPage(direction);
+    if (progress >= 100) {
+      if (viewMode === "original") {
+        changeOriginalPage(direction);
+      } else {
+        changeReadingPage(direction);
+      }
+    }
   }
 
   function openSearchHit(page: number) {
