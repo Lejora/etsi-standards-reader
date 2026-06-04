@@ -6,10 +6,13 @@ import {
   Check,
   Copy,
   Download,
+  Eraser,
   Highlighter,
   MoreVertical,
   PanelLeftClose,
   PanelLeftOpen,
+  PenLine,
+  Type,
   Upload,
   ZoomIn,
   ZoomOut,
@@ -19,16 +22,29 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
   type RefObject,
+  type ReactNode,
   type UIEventHandler,
   type WheelEventHandler,
 } from "react";
 import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
 import { IconButton } from "../../components/ui/IconButton";
 import { HighlightedText } from "./HighlightedText";
-import type { OutlineItem, PageDirection, ReadingBlock, SearchFilters, ViewMode } from "./types";
+import type {
+  DrawingPoint,
+  DrawingTool,
+  OutlineItem,
+  PageAnnotation,
+  PageDirection,
+  ReadingBlock,
+  SearchFilters,
+  StrokeAnnotation,
+  ViewMode,
+} from "./types";
 
 interface ReaderPaneProps {
+  annotations: PageAnnotation[];
   pdf: PDFDocumentProxy | null;
   viewMode: ViewMode;
   pageNumber: number;
@@ -56,11 +72,13 @@ interface ReaderPaneProps {
   onToggleDocumentPanel(): void;
   onZoomChange(zoom: number): void;
   onNormativeHighlightChange(enabled: boolean): void;
+  onPageAnnotationsChange(annotations: PageAnnotation[]): void;
   onScroll: UIEventHandler<HTMLDivElement>;
   onWheel: WheelEventHandler<HTMLDivElement>;
 }
 
 export function ReaderPane({
+  annotations,
   pdf,
   viewMode,
   pageNumber,
@@ -88,10 +106,14 @@ export function ReaderPane({
   onToggleDocumentPanel,
   onZoomChange,
   onNormativeHighlightChange,
+  onPageAnnotationsChange,
   onScroll,
   onWheel,
 }: ReaderPaneProps) {
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
+  const [drawingTool, setDrawingTool] = useState<DrawingTool | null>(null);
+  const [penSize, setPenSize] = useState(3);
+  const [textSize, setTextSize] = useState(14);
 
   return (
     <main className="reader-pane flex min-h-0 min-w-0 flex-col overflow-hidden bg-[#f4f7f7]">
@@ -180,25 +202,40 @@ export function ReaderPane({
         {!pdf ? (
           <EmptyReader onImport={onImport} />
         ) : viewMode === "reading" ? (
-          <ReadingDocument
-            boundaryDirection={boundaryDirection}
-            boundaryProgress={boundaryProgress}
-            isContentsPage={isContentsPage}
-            isFrontMatterPage={isFrontMatterPage}
-            nextReadingPage={nextReadingPage}
-            normativeHighlight={normativeHighlight}
-            onPageChange={onPageChange}
-            onViewModeChange={onViewModeChange}
-            outline={outline}
-            pageNumber={pageNumber}
-            pageTransition={pageTransition}
-            pdf={pdf}
-            readingBlocks={readingBlocks}
-            searchFilters={searchFilters}
-            searchQuery={searchQuery}
-            sectionTitle={sectionTitle}
-            zoom={zoom}
-          />
+          <>
+            <DrawingToolsPanel
+              activeTool={drawingTool}
+              onPenSizeChange={setPenSize}
+              onTextSizeChange={setTextSize}
+              onToolChange={setDrawingTool}
+              penSize={penSize}
+              textSize={textSize}
+            />
+            <ReadingDocument
+              annotations={annotations}
+              boundaryDirection={boundaryDirection}
+              boundaryProgress={boundaryProgress}
+              drawingTool={drawingTool}
+              isContentsPage={isContentsPage}
+              isFrontMatterPage={isFrontMatterPage}
+              nextReadingPage={nextReadingPage}
+              normativeHighlight={normativeHighlight}
+              onAnnotationsChange={onPageAnnotationsChange}
+              onPageChange={onPageChange}
+              onViewModeChange={onViewModeChange}
+              outline={outline}
+              pageNumber={pageNumber}
+              pageTransition={pageTransition}
+              pdf={pdf}
+              readingBlocks={readingBlocks}
+              searchFilters={searchFilters}
+              searchQuery={searchQuery}
+              sectionTitle={sectionTitle}
+              penSize={penSize}
+              textSize={textSize}
+              zoom={zoom}
+            />
+          </>
         ) : (
           <>
             <div
@@ -246,6 +283,7 @@ function EmptyReader({ onImport }: { onImport(): void }) {
 }
 
 interface ReadingDocumentProps {
+  annotations: PageAnnotation[];
   pdf: PDFDocumentProxy;
   pageNumber: number;
   sectionTitle: string;
@@ -260,12 +298,17 @@ interface ReadingDocumentProps {
   pageTransition: PageDirection | null;
   boundaryProgress: number;
   boundaryDirection: PageDirection;
+  drawingTool: DrawingTool | null;
+  penSize: number;
+  textSize: number;
   zoom: number;
+  onAnnotationsChange(annotations: PageAnnotation[]): void;
   onViewModeChange(mode: ViewMode): void;
   onPageChange(page: number): void;
 }
 
 function ReadingDocument({
+  annotations,
   pdf,
   pageNumber,
   sectionTitle,
@@ -280,14 +323,18 @@ function ReadingDocument({
   pageTransition,
   boundaryProgress,
   boundaryDirection,
+  drawingTool,
+  penSize,
+  textSize,
   zoom,
+  onAnnotationsChange,
   onViewModeChange,
   onPageChange,
 }: ReadingDocumentProps) {
   return (
     <>
       <article
-        className={`document-sheet reader-zoomable mx-auto min-h-full w-full max-w-[760px] border border-slate-200 bg-white px-16 py-12 shadow-[0_2px_12px_rgba(16,24,40,0.08)] ${
+        className={`document-sheet reader-zoomable relative mx-auto min-h-full w-full max-w-[760px] overflow-hidden border border-slate-200 bg-white px-16 py-12 shadow-[0_2px_12px_rgba(16,24,40,0.08)] ${
           pageTransition ? `page-transition-${pageTransition}` : ""
         }`}
         style={{ "--reader-zoom": zoom / 100 } as CSSProperties}
@@ -338,6 +385,13 @@ function ReadingDocument({
             <ChevronDown size={15} />
           </div>
         )}
+        <DrawingLayer
+          annotations={annotations}
+          activeTool={drawingTool}
+          onAnnotationsChange={onAnnotationsChange}
+          penSize={penSize}
+          textSize={textSize}
+        />
       </article>
       {boundaryProgress > 0 && (
         <div className="page-boundary-indicator">
@@ -349,6 +403,385 @@ function ReadingDocument({
       )}
     </>
   );
+}
+
+function DrawingToolsPanel({
+  activeTool,
+  onPenSizeChange,
+  onTextSizeChange,
+  onToolChange,
+  penSize,
+  textSize,
+}: {
+  activeTool: DrawingTool | null;
+  onPenSizeChange(size: number): void;
+  onTextSizeChange(size: number): void;
+  onToolChange(tool: DrawingTool | null): void;
+  penSize: number;
+  textSize: number;
+}) {
+  const tools: { tool: DrawingTool; label: string; icon: ReactNode }[] = [
+    { tool: "pen", label: "Pen", icon: <PenLine size={17} /> },
+    { tool: "eraser", label: "Eraser", icon: <Eraser size={17} /> },
+    { tool: "marker", label: "Marker", icon: <Highlighter size={17} /> },
+    { tool: "text", label: "Text", icon: <Type size={17} /> },
+  ];
+
+  return (
+    <div className="drawing-tools-panel" aria-label="Drawing tools">
+      {tools.map(({ tool, label, icon }) => (
+        <button
+          aria-label={label}
+          className={`drawing-tool-button ${activeTool === tool ? "active" : ""}`}
+          key={tool}
+          onClick={() => onToolChange(activeTool === tool ? null : tool)}
+          title={label}
+          type="button"
+        >
+          {icon}
+        </button>
+      ))}
+      {(activeTool === "pen" || activeTool === "text") && (
+        <div className="drawing-size-control">
+          <span>{activeTool === "pen" ? "Pen" : "Text"}</span>
+          <button
+            aria-label={activeTool === "pen" ? "Decrease pen size" : "Decrease text size"}
+            onClick={() => {
+              if (activeTool === "pen") {
+                onPenSizeChange(Math.max(1, penSize - 1));
+              } else {
+                onTextSizeChange(Math.max(10, textSize - 1));
+              }
+            }}
+            type="button"
+          >
+            -
+          </button>
+          <input
+            aria-label={activeTool === "pen" ? "Pen size" : "Text size"}
+            max={activeTool === "pen" ? 10 : 28}
+            min={activeTool === "pen" ? 1 : 10}
+            onChange={(event) => {
+              const nextSize = Number(event.target.value);
+              if (activeTool === "pen") {
+                onPenSizeChange(nextSize);
+              } else {
+                onTextSizeChange(nextSize);
+              }
+            }}
+            type="range"
+            value={activeTool === "pen" ? penSize : textSize}
+          />
+          <button
+            aria-label={activeTool === "pen" ? "Increase pen size" : "Increase text size"}
+            onClick={() => {
+              if (activeTool === "pen") {
+                onPenSizeChange(Math.min(10, penSize + 1));
+              } else {
+                onTextSizeChange(Math.min(28, textSize + 1));
+              }
+            }}
+            type="button"
+          >
+            +
+          </button>
+          <strong>{activeTool === "pen" ? penSize : textSize}</strong>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DrawingLayer({
+  activeTool,
+  annotations,
+  onAnnotationsChange,
+  penSize,
+  textSize,
+}: {
+  activeTool: DrawingTool | null;
+  annotations: PageAnnotation[];
+  onAnnotationsChange(annotations: PageAnnotation[]): void;
+  penSize: number;
+  textSize: number;
+}) {
+  const layerRef = useRef<HTMLDivElement>(null);
+  const textInputRef = useRef<HTMLTextAreaElement>(null);
+  const cancelTextRef = useRef(false);
+  const [draftStroke, setDraftStroke] = useState<StrokeAnnotation | null>(null);
+  const [draftText, setDraftText] = useState<{ x: number; y: number; text: string } | null>(null);
+
+  useEffect(() => {
+    textInputRef.current?.focus();
+  }, [draftText?.x, draftText?.y]);
+
+  function pointFromEvent(event: ReactPointerEvent): DrawingPoint {
+    const rect = layerRef.current?.getBoundingClientRect();
+    if (!rect) return { x: 0, y: 0 };
+    return {
+      x: Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width)),
+      y: Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height)),
+    };
+  }
+
+  function markerPointFromEvent(event: ReactPointerEvent, lockedY?: number): DrawingPoint | null {
+    const layerRect = layerRef.current?.getBoundingClientRect();
+    if (!layerRect) return null;
+    if (typeof lockedY === "number") {
+      return {
+        x: Math.min(1, Math.max(0, (event.clientX - layerRect.left) / layerRect.width)),
+        y: lockedY,
+      };
+    }
+    const textElement = findTextElementAt(event.clientX, event.clientY);
+    if (!textElement) return null;
+    const textRect = textElement.getBoundingClientRect();
+    const styles = window.getComputedStyle(textElement);
+    const parsedLineHeight = Number.parseFloat(styles.lineHeight);
+    const lineHeight = Number.isFinite(parsedLineHeight)
+      ? parsedLineHeight
+      : Number.parseFloat(styles.fontSize) * 1.45;
+    const lineIndex = Math.max(0, Math.floor((event.clientY - textRect.top) / lineHeight));
+    const snappedY = textRect.top + lineIndex * lineHeight + lineHeight * 0.62;
+    return {
+      x: Math.min(1, Math.max(0, (event.clientX - layerRect.left) / layerRect.width)),
+      y: Math.min(1, Math.max(0, (snappedY - layerRect.top) / layerRect.height)),
+    };
+  }
+
+  function createStroke(tool: "pen" | "marker", point: DrawingPoint): StrokeAnnotation {
+    return {
+      id: crypto.randomUUID(),
+      type: "stroke",
+      tool,
+      color: tool === "marker" ? "#facc15" : "#1f2937",
+      width: tool === "marker" ? 11 : penSize,
+      points: [point],
+    };
+  }
+
+  function commitText() {
+    if (!draftText) return;
+    if (cancelTextRef.current) {
+      cancelTextRef.current = false;
+      setDraftText(null);
+      return;
+    }
+    const text = draftText.text.trim();
+    if (text) {
+      onAnnotationsChange([
+        ...annotations,
+        {
+          id: crypto.randomUUID(),
+          type: "text",
+          x: draftText.x,
+          y: draftText.y,
+          color: "#1f2937",
+          fontSize: textSize,
+          text,
+        },
+      ]);
+    }
+    setDraftText(null);
+  }
+
+  function eraseAt(point: DrawingPoint) {
+    const targetId = findNearestAnnotationId(annotations, point);
+    if (!targetId) return;
+    onAnnotationsChange(annotations.filter((annotation) => annotation.id !== targetId));
+  }
+
+  function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!activeTool) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const point = pointFromEvent(event);
+    if (activeTool === "text") {
+      commitText();
+      cancelTextRef.current = false;
+      setDraftText({ ...point, text: "" });
+      return;
+    }
+    if (activeTool === "eraser") {
+      eraseAt(point);
+      return;
+    }
+    if (activeTool === "marker") {
+      const markerPoint = markerPointFromEvent(event);
+      if (!markerPoint) return;
+      event.currentTarget.setPointerCapture(event.pointerId);
+      setDraftStroke(createStroke("marker", markerPoint));
+      return;
+    }
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setDraftStroke(createStroke(activeTool, point));
+  }
+
+  function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!draftStroke || !activeTool || activeTool === "eraser" || activeTool === "text") return;
+    event.preventDefault();
+    const point =
+      draftStroke.tool === "marker" ? markerPointFromEvent(event, draftStroke.points[0]?.y) : pointFromEvent(event);
+    if (!point) return;
+    setDraftStroke((current) => {
+      if (!current) return current;
+      const lastPoint = current.points[current.points.length - 1];
+      const threshold = current.tool === "marker" ? 0.012 : 0.004;
+      if (Math.hypot(point.x - lastPoint.x, point.y - lastPoint.y) < threshold) return current;
+      return { ...current, points: [...current.points, point] };
+    });
+  }
+
+  function handlePointerUp(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!draftStroke) return;
+    event.preventDefault();
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    if (draftStroke.points.length > 1) {
+      onAnnotationsChange([...annotations, draftStroke]);
+    }
+    setDraftStroke(null);
+  }
+
+  const visibleAnnotations = draftStroke ? [...annotations, draftStroke] : annotations;
+
+  return (
+    <div
+      className={`drawing-layer ${activeTool ? "drawing-layer-active" : ""}`}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      ref={layerRef}
+    >
+      <svg className="drawing-svg" preserveAspectRatio="none" viewBox="0 0 100 100">
+        {visibleAnnotations.map((annotation) => {
+          if (annotation.type !== "stroke") return null;
+          return annotation.tool === "marker" ? (
+            markerSegments(annotation.points).map((segment, index) => (
+              <line
+                key={`${annotation.id}-${index}`}
+                opacity={0.38}
+                stroke={annotation.color}
+                strokeLinecap="round"
+                strokeWidth={annotation.width}
+                vectorEffect="non-scaling-stroke"
+                x1={segment.start.x * 100}
+                x2={segment.end.x * 100}
+                y1={segment.start.y * 100}
+                y2={segment.end.y * 100}
+              />
+            ))
+          ) : (
+            <polyline
+              fill="none"
+              key={annotation.id}
+              opacity={0.92}
+              points={annotation.points.map((point) => `${point.x * 100},${point.y * 100}`).join(" ")}
+              stroke={annotation.color}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={annotation.width}
+              vectorEffect="non-scaling-stroke"
+            />
+          );
+        })}
+      </svg>
+      {annotations.map((annotation) =>
+        annotation.type === "text" ? (
+          <div
+            className="drawing-text-note"
+            key={annotation.id}
+            style={{
+              left: `${annotation.x * 100}%`,
+              top: `${annotation.y * 100}%`,
+              color: annotation.color,
+              fontSize: `${annotation.fontSize ?? 14}px`,
+            }}
+          >
+            {annotation.text}
+          </div>
+        ) : null,
+      )}
+      {draftText && (
+        <textarea
+          className="drawing-text-input"
+          onBlur={commitText}
+          onChange={(event) => setDraftText((current) => (current ? { ...current, text: event.target.value } : current))}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              cancelTextRef.current = true;
+              setDraftText(null);
+            }
+            if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) commitText();
+          }}
+          onPointerDown={(event) => event.stopPropagation()}
+          ref={textInputRef}
+          style={{
+            fontSize: `${textSize}px`,
+            left: `${draftText.x * 100}%`,
+            top: `${draftText.y * 100}%`,
+          }}
+          value={draftText.text}
+        />
+      )}
+    </div>
+  );
+}
+
+function findTextElementAt(clientX: number, clientY: number) {
+  return (
+    document
+      .elementsFromPoint(clientX, clientY)
+      .map((element) =>
+        element.closest(
+          ".reader-copy p, .reader-list li, .reader-section-heading, .reader-subheading, .reader-heading",
+        ),
+      )
+      .find(Boolean) as HTMLElement | undefined
+  );
+}
+
+function markerSegments(points: DrawingPoint[]) {
+  const segments: { start: DrawingPoint; end: DrawingPoint }[] = [];
+  for (let index = 1; index < points.length; index += 1) {
+    const start = points[index - 1];
+    const end = points[index];
+    if (Math.abs(start.y - end.y) < 0.007) {
+      segments.push({ start, end });
+    }
+  }
+  return segments;
+}
+
+function findNearestAnnotationId(annotations: PageAnnotation[], point: DrawingPoint) {
+  let nearest: { id: string; distance: number } | null = null;
+  for (const annotation of annotations) {
+    const distance =
+      annotation.type === "text"
+        ? Math.hypot(annotation.x - point.x, annotation.y - point.y)
+        : nearestStrokeDistance(annotation.points, point);
+    if (!nearest || distance < nearest.distance) {
+      nearest = { id: annotation.id, distance };
+    }
+  }
+  return nearest && nearest.distance < 0.035 ? nearest.id : null;
+}
+
+function nearestStrokeDistance(points: DrawingPoint[], point: DrawingPoint) {
+  if (points.length < 2) return points[0] ? Math.hypot(points[0].x - point.x, points[0].y - point.y) : 1;
+  let nearest = Number.POSITIVE_INFINITY;
+  for (let index = 1; index < points.length; index += 1) {
+    nearest = Math.min(nearest, distanceToSegment(point, points[index - 1], points[index]));
+  }
+  return nearest;
+}
+
+function distanceToSegment(point: DrawingPoint, start: DrawingPoint, end: DrawingPoint) {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const lengthSquared = dx * dx + dy * dy;
+  if (!lengthSquared) return Math.hypot(point.x - start.x, point.y - start.y);
+  const projection = Math.max(0, Math.min(1, ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared));
+  return Math.hypot(point.x - (start.x + projection * dx), point.y - (start.y + projection * dy));
 }
 
 function FrontMatterPreview({

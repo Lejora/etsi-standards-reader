@@ -13,6 +13,9 @@ contextBridge.exposeInMainWorld("etsiLibrary", {
       folderId,
     ),
   readPdf: (documentId) => ipcRenderer.invoke("library:read-pdf", documentId),
+  listAnnotations: (documentId) => ipcRenderer.invoke("library:list-annotations", documentId),
+  savePageAnnotations: (documentId, pageNumber, annotations) =>
+    ipcRenderer.invoke("library:save-page-annotations", documentId, pageNumber, annotations),
   downloadPdf: (documentId) => ipcRenderer.invoke("library:download-pdf", documentId),
   renameDocument: (documentId, name) => ipcRenderer.invoke("library:rename-document", documentId, name),
   deleteDocument: (documentId) => ipcRenderer.invoke("library:delete-document", documentId),

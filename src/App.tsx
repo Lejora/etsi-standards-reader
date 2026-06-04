@@ -125,6 +125,7 @@ function App() {
                 />
               ) : null}
               <ReaderPane
+                annotations={workspace.annotationsByPage[String(workspace.pageNumber)] ?? []}
                 boundaryDirection={workspace.boundaryDirection}
                 boundaryProgress={workspace.boundaryProgress}
                 canvasRef={workspace.canvasRef}
@@ -136,6 +137,9 @@ function App() {
                 onDownload={() => void workspace.downloadDocument()}
                 onCopyCitation={() => void workspace.copyCitation()}
                 onNormativeHighlightChange={workspace.setNormativeHighlight}
+                onPageAnnotationsChange={(annotations) =>
+                  void workspace.updatePageAnnotations(workspace.pageNumber, annotations)
+                }
                 onPageChange={workspace.setPageNumber}
                 onToggleDocumentPanel={() => setIsSidePanelOpen((current) => !current)}
                 onScroll={workspace.handleReaderScroll}

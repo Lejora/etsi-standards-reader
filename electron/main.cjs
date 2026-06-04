@@ -107,6 +107,7 @@ function libraryPaths() {
     originals: path.join(root, "originals"),
     manifest: path.join(root, "documents.json"),
     folders: path.join(root, "folders.json"),
+    annotations: path.join(root, "annotations.json"),
   };
 }
 
@@ -158,6 +159,59 @@ async function writeFolders(folders) {
   const temp = `${folderPath}.tmp`;
   await fsp.writeFile(temp, JSON.stringify(customFolders, null, 2), "utf8");
   await fsp.rename(temp, folderPath);
+}
+
+async function readAnnotationsFile() {
+  const { annotations } = await ensureLibrary();
+  try {
+    return JSON.parse(await fsp.readFile(annotations, "utf8"));
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return {};
+    }
+    throw error;
+  }
+}
+
+async function writeAnnotationsFile(annotationsByDocument) {
+  const { annotations } = await ensureLibrary();
+  const temp = `${annotations}.tmp`;
+  await fsp.writeFile(temp, JSON.stringify(annotationsByDocument, null, 2), "utf8");
+  await fsp.rename(temp, annotations);
+}
+
+async function readDocumentAnnotations(documentId) {
+  const documents = await readManifest();
+  if (!documents.some((candidate) => candidate.id === documentId)) {
+    throw new Error("Document not found.");
+  }
+  const annotationsByDocument = await readAnnotationsFile();
+  return annotationsByDocument[documentId] ?? {};
+}
+
+async function saveDocumentPageAnnotations(documentId, pageNumber, pageAnnotations) {
+  const documents = await readManifest();
+  if (!documents.some((candidate) => candidate.id === documentId)) {
+    throw new Error("Document not found.");
+  }
+  const pageKey = String(Number.parseInt(pageNumber, 10));
+  if (!pageKey || pageKey === "NaN") {
+    throw new Error("Page number is required.");
+  }
+  const annotationsByDocument = await readAnnotationsFile();
+  const documentAnnotations = annotationsByDocument[documentId] ?? {};
+  if (Array.isArray(pageAnnotations) && pageAnnotations.length) {
+    documentAnnotations[pageKey] = pageAnnotations;
+  } else {
+    delete documentAnnotations[pageKey];
+  }
+  if (Object.keys(documentAnnotations).length) {
+    annotationsByDocument[documentId] = documentAnnotations;
+  } else {
+    delete annotationsByDocument[documentId];
+  }
+  await writeAnnotationsFile(annotationsByDocument);
+  return documentAnnotations;
 }
 
 function sha256(filePath) {
@@ -423,6 +477,12 @@ handleTrusted("library:read-pdf", async (_event, documentId) => {
   const { originals } = await ensureLibrary();
   return fsp.readFile(path.join(originals, document.storedFileName));
 });
+
+handleTrusted("library:list-annotations", async (_event, documentId) => readDocumentAnnotations(documentId));
+
+handleTrusted("library:save-page-annotations", async (_event, documentId, pageNumber, pageAnnotations) =>
+  saveDocumentPageAnnotations(documentId, pageNumber, pageAnnotations),
+);
 
 handleTrusted("library:download-pdf", async (_event, documentId) => copyDocumentToDownloads(documentId));
 

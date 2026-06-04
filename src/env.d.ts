@@ -36,6 +36,12 @@ interface Window {
     importPdfs(folderId?: string): Promise<ImportResult[]>;
     importDroppedPdfs(files: File[], folderId?: string): Promise<ImportResult[]>;
     readPdf(documentId: string): Promise<Uint8Array>;
+    listAnnotations(documentId: string): Promise<Record<string, Record<string, unknown>[]>>;
+    savePageAnnotations(
+      documentId: string,
+      pageNumber: number,
+      annotations: Record<string, unknown>[],
+    ): Promise<Record<string, Record<string, unknown>[]>>;
     downloadPdf(documentId: string): Promise<DownloadResult>;
     renameDocument(documentId: string, name: string): Promise<ManagedDocument>;
     deleteDocument(documentId: string): Promise<ManagedDocument[]>;

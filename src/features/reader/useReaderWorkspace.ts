@@ -18,6 +18,7 @@ import type {
   SidePanel,
   ToastMessage,
   ViewMode,
+  PageAnnotation,
 } from "./types";
 
 GlobalWorkerOptions.workerSrc = pdfWorker;
@@ -58,6 +59,7 @@ export function useReaderWorkspace() {
   const [boundaryProgress, setBoundaryProgress] = useState(0);
   const [boundaryDirection, setBoundaryDirection] = useState<PageDirection>("next");
   const [windowMaximized, setWindowMaximized] = useState(false);
+  const [annotationsByPage, setAnnotationsByPage] = useState<Record<string, PageAnnotation[]>>({});
 
   function updateViewZoom(nextZoom: number) {
     setZoom(Math.min(180, Math.max(50, Math.round(nextZoom / 10) * 10)));
@@ -94,12 +96,14 @@ export function useReaderWorkspace() {
     const bytes = await window.etsiLibrary.readPdf(document.id);
     const loadedPdf = await getDocument({ data: bytes }).promise;
     const resolvedOutline = await resolveOutline(loadedPdf);
+    const savedAnnotations = await window.etsiLibrary.listAnnotations(document.id);
     setActiveDocument(document);
     setPdf(loadedPdf);
     setPageNumber(1);
     setIndexedPages([]);
     setIndexStatus("Not indexed");
     setOutline(resolvedOutline);
+    setAnnotationsByPage(savedAnnotations as unknown as Record<string, PageAnnotation[]>);
     setContentsRange(await resolveContentsRange(loadedPdf, resolvedOutline));
   }
 
@@ -112,6 +116,7 @@ export function useReaderWorkspace() {
     setReadingBlocks([]);
     setIndexedPages([]);
     setIndexStatus("Not indexed");
+    setAnnotationsByPage({});
   }
 
   async function importDocuments(folderId?: string, openAfterImport = true) {
@@ -499,8 +504,32 @@ export function useReaderWorkspace() {
     selectViewMode("reading");
   }
 
+  async function updatePageAnnotations(page: number, annotations: PageAnnotation[]) {
+    if (!activeDocument || !window.etsiLibrary) return;
+    const pageKey = String(page);
+    setAnnotationsByPage((current) => {
+      const next = { ...current };
+      if (annotations.length) {
+        next[pageKey] = annotations;
+      } else {
+        delete next[pageKey];
+      }
+      return next;
+    });
+    try {
+      await window.etsiLibrary.savePageAnnotations(
+        activeDocument.id,
+        page,
+        annotations as unknown as Record<string, unknown>[],
+      );
+    } catch {
+      pushToast("Unable to save the drawing.", "error");
+    }
+  }
+
   return {
     activeDocument,
+    annotationsByPage,
     boundaryDirection,
     boundaryProgress,
     canvasRef,
@@ -545,6 +574,7 @@ export function useReaderWorkspace() {
     openDocument,
     openSearchHit,
     selectViewMode,
+    updatePageAnnotations,
     setPageNumber,
     setSearchQuery,
     setSearchFilters,

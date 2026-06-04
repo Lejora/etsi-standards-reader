@@ -4,6 +4,33 @@ export type SidePanel = "search" | "notes";
 export type PageDirection = "next" | "previous";
 export type AppMode = "home" | "reader" | "search" | "settings";
 export type SearchMode = "contains" | "all" | "phrase";
+export type DrawingTool = "pen" | "eraser" | "marker" | "text";
+
+export interface DrawingPoint {
+  x: number;
+  y: number;
+}
+
+export interface StrokeAnnotation {
+  id: string;
+  type: "stroke";
+  tool: "pen" | "marker";
+  color: string;
+  width: number;
+  points: DrawingPoint[];
+}
+
+export interface TextAnnotation {
+  id: string;
+  type: "text";
+  x: number;
+  y: number;
+  color: string;
+  fontSize?: number;
+  text: string;
+}
+
+export type PageAnnotation = StrokeAnnotation | TextAnnotation;
 
 export interface OutlineItem {
   title: string;
