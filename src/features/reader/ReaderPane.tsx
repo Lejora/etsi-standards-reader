@@ -3,6 +3,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Check,
   Copy,
   Download,
   Highlighter,
@@ -13,7 +14,15 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { useEffect, useRef, type CSSProperties, type RefObject, type UIEventHandler, type WheelEventHandler } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type RefObject,
+  type UIEventHandler,
+  type WheelEventHandler,
+} from "react";
 import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
 import { IconButton } from "../../components/ui/IconButton";
 import { HighlightedText } from "./HighlightedText";
@@ -82,9 +91,11 @@ export function ReaderPane({
   onScroll,
   onWheel,
 }: ReaderPaneProps) {
+  const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
+
   return (
     <main className="reader-pane flex min-h-0 min-w-0 flex-col overflow-hidden bg-[#f4f7f7]">
-      <div className="flex h-[58px] shrink-0 items-center justify-between gap-3 overflow-x-auto border-b border-slate-200 bg-white px-5">
+      <div className="relative flex h-[58px] shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-5">
         <div className="flex shrink-0 items-center gap-3">
           <IconButton
             label={sidePanelOpen ? "Hide document panel" : "Show document panel"}
@@ -128,22 +139,36 @@ export function ReaderPane({
           <IconButton label="Zoom in" onClick={() => onZoomChange(Math.min(160, zoom + 10))}>
             <ZoomIn size={16} />
           </IconButton>
-          <IconButton
-            active={normativeHighlight}
-            label="Toggle shall/may highlight"
-            onClick={() => onNormativeHighlightChange(!normativeHighlight)}
-          >
-            <Highlighter size={16} />
-          </IconButton>
           <IconButton label="Copy citation" disabled={!pdf} onClick={onCopyCitation}>
             <Copy size={16} />
           </IconButton>
           <IconButton label="Download original PDF" disabled={!pdf} onClick={onDownload}>
             <Download size={16} />
           </IconButton>
-          <IconButton label="More actions">
-            <MoreVertical size={16} />
-          </IconButton>
+          <div className="relative">
+            <IconButton
+              active={actionsMenuOpen}
+              label="More actions"
+              onClick={() => setActionsMenuOpen((current) => !current)}
+            >
+              <MoreVertical size={16} />
+            </IconButton>
+            {actionsMenuOpen && (
+              <div className="absolute right-0 top-10 z-40 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-xl">
+                <button
+                  className="flex w-full items-center gap-3 px-3 py-2 text-left text-slate-600 hover:bg-slate-50"
+                  onClick={() => {
+                    onNormativeHighlightChange(!normativeHighlight);
+                    setActionsMenuOpen(false);
+                  }}
+                >
+                  <Highlighter size={15} />
+                  <span className="min-w-0 flex-1">Toggle shall/may highlight</span>
+                  {normativeHighlight && <Check size={15} className="text-brand-700" />}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <div
