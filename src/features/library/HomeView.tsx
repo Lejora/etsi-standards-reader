@@ -1,5 +1,6 @@
-import { useMemo, useState, type DragEvent } from "react";
+import { useMemo, useState, type DragEvent, type FormEvent } from "react";
 import {
+  Check,
   Copy,
   Download,
   FileText,
@@ -9,9 +10,11 @@ import {
   GripVertical,
   LibraryBig,
   MoreVertical,
+  Pencil,
   Plus,
   Trash2,
   Upload,
+  X,
 } from "lucide-react";
 
 const DOCUMENT_DRAG_TYPE = "application/x-etsi-document-id";
@@ -32,6 +35,7 @@ export function HomeView({
   onDownloadDocument,
   onMoveDocument,
   onOpenDocument,
+  onRenameDocument,
   onRemoveDocument,
   onRevealDocument,
   onSelectFolder,
@@ -47,6 +51,7 @@ export function HomeView({
   onDownloadDocument(documentId: string): void;
   onMoveDocument(documentId: string, folderId: string): Promise<void>;
   onOpenDocument(document: ManagedDocument): void;
+  onRenameDocument(documentId: string, name: string): Promise<void>;
   onRemoveDocument(documentId: string): void;
   onRevealDocument(documentId: string): void;
   onSelectFolder(folderId: string): void;
@@ -57,6 +62,10 @@ export function HomeView({
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
   const [isUploadDropTarget, setIsUploadDropTarget] = useState(false);
   const [menuDocumentId, setMenuDocumentId] = useState<string | null>(null);
+  const [editingDocumentId, setEditingDocumentId] = useState<string | null>(null);
+  const [renameDraft, setRenameDraft] = useState("");
+  const [renameError, setRenameError] = useState("");
+  const [renamingDocumentId, setRenamingDocumentId] = useState<string | null>(null);
   const selectedFolder = folders.find((folder) => folder.id === selectedFolderId) ?? folders[0];
   const visibleDocuments = useMemo(
     () => documents.filter((document) => document.folderId === selectedFolder?.id),
@@ -119,6 +128,42 @@ export function HomeView({
     if (!confirmed) return;
     setMenuDocumentId(null);
     onRemoveDocument(document.id);
+  }
+
+  function beginRenameDocument(document: ManagedDocument) {
+    setMenuDocumentId(null);
+    setEditingDocumentId(document.id);
+    setRenameDraft(document.fileName);
+    setRenameError("");
+  }
+
+  function cancelRenameDocument() {
+    setEditingDocumentId(null);
+    setRenameDraft("");
+    setRenameError("");
+  }
+
+  async function submitRenameDocument(event: FormEvent, document: ManagedDocument) {
+    event.preventDefault();
+    const nextName = renameDraft.trim();
+    if (!nextName) {
+      setRenameError("Name is required.");
+      return;
+    }
+    if (nextName === document.fileName) {
+      cancelRenameDocument();
+      return;
+    }
+    setRenameError("");
+    setRenamingDocumentId(document.id);
+    try {
+      await onRenameDocument(document.id, nextName);
+      cancelRenameDocument();
+    } catch (error) {
+      setRenameError(error instanceof Error ? error.message : "Document could not be renamed.");
+    } finally {
+      setRenamingDocumentId(null);
+    }
   }
 
   return (
@@ -237,24 +282,66 @@ export function HomeView({
               <Upload size={16} />
               Drop PDF files to import into {selectedFolder?.name ?? "this folder"}
             </div>
-            {visibleDocuments.map((document) => (
-              <div
-                className={`mb-3 flex cursor-grab items-center gap-4 rounded-xl border p-4 active:cursor-grabbing ${
-                  document.id === activeDocument?.id ? "border-brand-100 bg-brand-50/40" : "border-slate-100"
-                }`}
-                draggable
-                key={document.id}
-                onDragStart={(event) => beginDocumentDrag(event, document.id)}
-              >
-                <GripVertical size={15} className="shrink-0 text-slate-300" />
-                <span className="grid size-11 shrink-0 place-items-center rounded-lg bg-slate-50 text-brand-700">
-                  <FileText size={21} />
-                </span>
-                <button className="min-w-0 flex-1 text-left" onClick={() => onOpenDocument(document)}>
-                  <span className="block truncate text-sm font-medium text-slate-800">{document.fileName}</span>
-                  <span className="mt-1 block text-xs text-slate-400">{bytesLabel(document.byteSize)}</span>
-                </button>
-                <div className="relative shrink-0" onMouseDown={(event) => event.stopPropagation()}>
+            {visibleDocuments.map((document) => {
+              const isEditing = editingDocumentId === document.id;
+              const isRenaming = renamingDocumentId === document.id;
+              return (
+                <div
+                  className={`mb-3 flex items-center gap-4 rounded-xl border p-4 ${
+                    isEditing ? "" : "cursor-grab active:cursor-grabbing"
+                  } ${document.id === activeDocument?.id ? "border-brand-100 bg-brand-50/40" : "border-slate-100"}`}
+                  draggable={!isEditing}
+                  key={document.id}
+                  onDragStart={(event) => beginDocumentDrag(event, document.id)}
+                >
+                  <GripVertical size={15} className="shrink-0 text-slate-300" />
+                  <span className="grid size-11 shrink-0 place-items-center rounded-lg bg-slate-50 text-brand-700">
+                    <FileText size={21} />
+                  </span>
+                  {isEditing ? (
+                    <form
+                      className="min-w-0 flex-1"
+                      onSubmit={(event) => void submitRenameDocument(event, document)}
+                    >
+                      <div className="flex min-w-0 items-center gap-2">
+                        <input
+                          autoFocus
+                          className="h-9 min-w-0 flex-1 rounded-lg border border-slate-200 px-3 text-sm font-medium text-slate-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                          disabled={isRenaming}
+                          value={renameDraft}
+                          onChange={(event) => setRenameDraft(event.target.value)}
+                          onKeyDown={(event) => {
+                            if (event.key === "Escape") cancelRenameDocument();
+                          }}
+                        />
+                        <button
+                          aria-label="Save PDF name"
+                          className="grid size-9 shrink-0 place-items-center rounded-lg bg-brand-600 text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                          disabled={isRenaming}
+                          type="submit"
+                        >
+                          <Check size={16} />
+                        </button>
+                        <button
+                          aria-label="Cancel rename"
+                          className="grid size-9 shrink-0 place-items-center rounded-lg text-slate-500 hover:bg-slate-50"
+                          disabled={isRenaming}
+                          onClick={cancelRenameDocument}
+                          type="button"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                      {renameError && <p className="mt-1 text-xs text-red-600">{renameError}</p>}
+                    </form>
+                  ) : (
+                    <button className="min-w-0 flex-1 text-left" onClick={() => onOpenDocument(document)}>
+                      <span className="block truncate text-sm font-medium text-slate-800">{document.fileName}</span>
+                      <span className="mt-1 block text-xs text-slate-400">{bytesLabel(document.byteSize)}</span>
+                    </button>
+                  )}
+                  {!isEditing && (
+                    <div className="relative shrink-0" onMouseDown={(event) => event.stopPropagation()}>
                   <button
                     aria-label={`Actions for ${document.fileName}`}
                     className="grid size-9 place-items-center rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-700"
@@ -267,6 +354,13 @@ export function HomeView({
                   </button>
                   {menuDocumentId === document.id && (
                     <div className="absolute right-0 top-10 z-30 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-xl">
+                      <button
+                        className="flex w-full items-center gap-3 px-3 py-2 text-left text-slate-600 hover:bg-slate-50"
+                        onClick={() => beginRenameDocument(document)}
+                      >
+                        <Pencil size={15} />
+                        Rename
+                      </button>
                       <button
                         className="flex w-full items-center gap-3 px-3 py-2 text-left text-slate-600 hover:bg-slate-50"
                         onClick={() => {
@@ -307,9 +401,11 @@ export function HomeView({
                       </button>
                     </div>
                   )}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {!visibleDocuments.length && (
               <div className="flex h-full min-h-52 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 text-center">
                 <FolderClosed size={27} className="text-slate-300" />

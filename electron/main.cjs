@@ -227,6 +227,61 @@ async function copyDocumentToDownloads(documentId) {
   return { fileName: path.basename(destinationPath), path: destinationPath };
 }
 
+function normalizeDocumentFileName(name) {
+  const cleanedName = String(name ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, "_")
+    .slice(0, 180);
+  if (!cleanedName) {
+    throw new Error("Document name is required.");
+  }
+  return path.extname(cleanedName).toLowerCase() === ".pdf" ? cleanedName : `${cleanedName}.pdf`;
+}
+
+function uniqueManagedFileName(originalsPath, preferredName, currentStoredFileName) {
+  const parsed = path.parse(preferredName);
+  let candidate = preferredName;
+  let suffix = 1;
+  while (
+    candidate.toLowerCase() !== String(currentStoredFileName).toLowerCase() &&
+    fs.existsSync(path.join(originalsPath, candidate))
+  ) {
+    candidate = `${parsed.name} (${suffix})${parsed.ext}`;
+    suffix += 1;
+  }
+  return candidate;
+}
+
+async function renameManagedDocument(documentId, name) {
+  const documents = await readManifest();
+  const document = documents.find((candidate) => candidate.id === documentId);
+  if (!document) {
+    throw new Error("Document not found.");
+  }
+  const { originals } = await ensureLibrary();
+  const normalizedFileName = normalizeDocumentFileName(name);
+  const storedFileName = uniqueManagedFileName(originals, normalizedFileName, document.storedFileName);
+  const currentPath = path.join(originals, document.storedFileName);
+  const nextPath = path.join(originals, storedFileName);
+
+  if (storedFileName !== document.storedFileName) {
+    const sharedStoredFile = documents.some(
+      (candidate) => candidate.id !== document.id && candidate.storedFileName === document.storedFileName,
+    );
+    if (sharedStoredFile) {
+      await fsp.copyFile(currentPath, nextPath);
+    } else {
+      await fsp.rename(currentPath, nextPath);
+    }
+  }
+
+  document.fileName = storedFileName;
+  document.storedFileName = storedFileName;
+  await writeManifest(documents);
+  return document;
+}
+
 async function deleteManagedDocument(documentId) {
   const documents = await readManifest();
   const document = documents.find((candidate) => candidate.id === documentId);
@@ -370,6 +425,8 @@ handleTrusted("library:read-pdf", async (_event, documentId) => {
 });
 
 handleTrusted("library:download-pdf", async (_event, documentId) => copyDocumentToDownloads(documentId));
+
+handleTrusted("library:rename-document", async (_event, documentId, name) => renameManagedDocument(documentId, name));
 
 handleTrusted("library:delete-document", async (_event, documentId) => deleteManagedDocument(documentId));
 

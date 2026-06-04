@@ -180,6 +180,19 @@ export function useReaderWorkspace() {
     }
   }
 
+  async function renameDocument(documentId: string, name: string) {
+    if (!window.etsiLibrary) return;
+    try {
+      const updatedDocument = await window.etsiLibrary.renameDocument(documentId, name);
+      setDocuments(await window.etsiLibrary.listDocuments());
+      setActiveDocument((current) => (current?.id === updatedDocument.id ? updatedDocument : current));
+      pushToast(`Renamed to "${updatedDocument.fileName}".`);
+    } catch {
+      pushToast("Unable to rename the document.", "error");
+      throw new Error("Document could not be renamed.");
+    }
+  }
+
   async function deleteDocument(documentId: string) {
     if (!window.etsiLibrary) return;
     try {
@@ -518,6 +531,7 @@ export function useReaderWorkspace() {
     dismissToast,
     downloadDocument,
     deleteDocument,
+    renameDocument,
     revealDocument,
     copyCitation,
     copyDocumentCitation,

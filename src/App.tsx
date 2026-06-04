@@ -76,6 +76,7 @@ function App() {
               onCopyCitation={(document) => void workspace.copyDocumentCitation(document)}
               onDownloadDocument={(documentId) => void workspace.downloadDocument(documentId)}
               onMoveDocument={workspace.moveDocument}
+              onRenameDocument={workspace.renameDocument}
               onRemoveDocument={(documentId) => void workspace.deleteDocument(documentId)}
               onSelectFolder={setSelectedFolderId}
               onRevealDocument={(documentId) => void workspace.revealDocument(documentId)}
